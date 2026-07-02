@@ -1,5 +1,8 @@
+// Sidebar: app-wide navigation rail.
+// Renders as a bottom bar on mobile and a vertical left rail on desktop (md+).
 import Link from "next/link";
 
+// Navigation entries; `active` marks the currently highlighted item.
 const navItems = [
   { label: "Grid", icon: GridIcon, active: true },
   { label: "Notifications", icon: BellIcon },
@@ -11,19 +14,22 @@ const navItems = [
 
 export default function Sidebar() {
   return (
-    <aside className="flex h-screen w-20 flex-col items-center gap-6 border-r border-gray-200 bg-white py-5">
+    <aside className="fixed bottom-0 left-0 z-20 flex w-full flex-row items-center gap-2 border-t border-gray-200 bg-white px-3 py-2 md:sticky md:top-0 md:h-screen md:w-20 md:flex-col md:gap-6 md:border-r md:border-t-0 md:px-0 md:py-5">
+      {/* App logo — links back to the home dashboard */}
       <Link href="/" className="flex flex-col items-center gap-0.5">
         <LogoIcon />
-        <span className="text-[10px] font-medium text-gray-400">Beta</span>
+        <span className="hidden text-[10px] font-medium text-gray-400 md:block">Beta</span>
       </Link>
 
-      <button className="mb-2 h-11 w-11 overflow-hidden rounded-full border-2 border-white ring-2 ring-indigo-500">
+      {/* User avatar button (placeholder emoji for now) */}
+      <button className="h-9 w-9 overflow-hidden rounded-full border-2 border-white ring-2 ring-indigo-500 md:mb-2 md:h-11 md:w-11">
         <div className="flex h-full w-full items-center justify-center bg-gray-800 text-xs text-white">
           🧑
         </div>
       </button>
 
-      <nav className="flex flex-1 flex-col items-center gap-5">
+      {/* Navigation icon buttons, built from the navItems list above */}
+      <nav className="flex flex-1 flex-row items-center justify-around gap-2 md:flex-col md:justify-start md:gap-5">
         {navItems.map(({ label, icon: Icon, active }) => (
           <button
             key={label}
@@ -42,6 +48,9 @@ export default function Sidebar() {
   );
 }
 
+// ---- Inline SVG icon components used by the sidebar ----
+
+// Skyforge logo mark (indigo bolt + orange dot)
 function LogoIcon() {
   return (
     <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
@@ -54,6 +63,7 @@ function LogoIcon() {
   );
 }
 
+// Dashboard grid icon; fills indigo when the item is active
 function GridIcon({ active }: { active?: boolean }) {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
@@ -65,6 +75,7 @@ function GridIcon({ active }: { active?: boolean }) {
   );
 }
 
+// Notifications bell icon
 function BellIcon() {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -74,6 +85,7 @@ function BellIcon() {
   );
 }
 
+// Bookmarks / saved items icon
 function BookmarkIcon() {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -82,6 +94,7 @@ function BookmarkIcon() {
   );
 }
 
+// Chat / messaging icon
 function ChatIcon() {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -90,6 +103,7 @@ function ChatIcon() {
   );
 }
 
+// Mail / inbox icon
 function MailIcon() {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -99,6 +113,7 @@ function MailIcon() {
   );
 }
 
+// Help / support icon (question mark in a circle)
 function HelpIcon() {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">

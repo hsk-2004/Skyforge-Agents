@@ -1,3 +1,7 @@
+// Shared UI helpers for agent pages: the Agent type, flag/badge/mock-data
+// utilities, and the small inline SVG icon components.
+
+// Shape of an agent record as returned by /api/agents (mirrors the Prisma model)
 export interface Agent {
   id: string;
   company: string;
@@ -15,32 +19,91 @@ export interface Agent {
   networks: string | null;
 }
 
+// Map a country name to its flag emoji; falls back to a white flag if unknown
 export const getFlagEmoji = (countryName: string) => {
+  // Added flag emojis for countries imported from AON.xlsx (Albania, Austria, Bangladesh, etc.)
   const code: { [key: string]: string } = {
+    Albania: "🇦🇱",
     Argentina: "🇦🇷",
     Australia: "🇦🇺",
+    Austria: "🇦🇹",
+    Bangladesh: "🇧🇩",
+    Belgium: "🇧🇪",
     Brazil: "🇧🇷",
+    Bulgaria: "🇧🇬",
+    Cambodia: "🇰🇭",
     Canada: "🇨🇦",
+    Chile: "🇨🇱",
     China: "🇨🇳",
     Colombia: "🇨🇴",
+    Croatia: "🇭🇷",
+    Cyprus: "🇨🇾",
     "Czech Republic": "🇨🇿",
+    Djibouti: "🇩🇯",
+    "Dominican Republic": "🇩🇴",
+    Egypt: "🇪🇬",
+    "El Salvador": "🇸🇻",
+    Ethiopia: "🇪🇹",
+    Finland: "🇫🇮",
     France: "🇫🇷",
     Germany: "🇩🇪",
+    Ghana: "🇬🇭",
+    Greece: "🇬🇷",
+    Guatemala: "🇬🇹",
+    Haiti: "🇭🇹",
+    "Hong Kong": "🇭🇰",
     India: "🇮🇳",
+    Indonesia: "🇮🇩",
+    Iran: "🇮🇷",
+    Iraq: "🇮🇶",
+    Israel: "🇮🇱",
     Italy: "🇮🇹",
-    Malaysia: "🇲🇾",
-    Mexico: "🇲🇽",
-    Poland: "🇵🇱",
-    "Saudi Arabia": "🇸🇦",
-    "South Africa": "🇿🇦",
+    Japan: "🇯🇵",
+    Korea: "🇰🇷",
     "South Korea": "🇰🇷",
     "South-Korea": "🇰🇷",
+    Kosovo: "🇽🇰",
+    Lebanon: "🇱🇧",
+    Lichtenstein: "🇱🇮",
+    Macedonia: "🇲🇰",
+    Malaysia: "🇲🇾",
+    Mauritius: "🇲🇺",
+    Mexico: "🇲🇽",
+    Morocco: "🇲🇦",
+    Myanmar: "🇲🇲",
+    Nepal: "🇳🇵",
+    Netherlands: "🇳🇱",
+    "New Zealand": "🇳🇿",
+    Nigeria: "🇳🇬",
+    Pakistan: "🇵🇰",
+    Peru: "🇵🇪",
+    Philippines: "🇵🇭",
+    Poland: "🇵🇱",
+    Portugal: "🇵🇹",
+    Romania: "🇷🇴",
+    "Saudi Arabia": "🇸🇦",
+    Senegal: "🇸🇳",
+    Singapore: "🇸🇬",
+    Slovenia: "🇸🇮",
+    "South Africa": "🇿🇦",
     Spain: "🇪🇸",
+    "Sri Lanka": "🇱🇰",
+    Sweden: "🇸🇪",
+    Switzerland: "🇨🇭",
+    Syria: "🇸🇾",
+    Taiwan: "🇹🇼",
+    Thailand: "🇹🇭",
+    Tunisia: "🇹🇳",
     Turkey: "🇹🇷",
     Türkiye: "🇹🇷",
+    UAE: "🇦🇪",
     "United Arab Emirates": "🇦🇪",
+    UK: "🇬🇧",
     "United Kingdom": "🇬🇧",
+    USA: "🇺🇸",
     "United States of America": "🇺🇸",
+    Uganda: "🇺🇬",
+    Uruguay: "🇺🇾",
     Vietnam: "🇻🇳",
   };
   return code[countryName] || "🏳️";
@@ -48,6 +111,7 @@ export const getFlagEmoji = (countryName: string) => {
 
 // Deterministically generate beautiful mock data for columns empty in DB
 export const getDeterministicMockData = (id: string, name: string) => {
+  // Simple character-code hash of the id so the same agent always gets the same mock values
   const hash = Array.from(id).reduce((acc, char) => acc + char.charCodeAt(0), 0);
 
   const mockContactsList = [
@@ -76,6 +140,7 @@ export const getDeterministicMockData = (id: string, name: string) => {
     ["MarcoPolo", "IAN"],
   ];
 
+  // Pick mock values from the pools above based on the hash (rating range 3.8–4.9)
   const ratingValue = 3.8 + (hash % 12) / 10;
   const contacts = mockContactsList[hash % mockContactsList.length];
   const networks = mockNetworksList[hash % mockNetworksList.length];
@@ -84,6 +149,7 @@ export const getDeterministicMockData = (id: string, name: string) => {
   return { contacts, networks, rating };
 };
 
+// Return Tailwind classes for a network badge, giving each network its own color
 export const getNetworkBadgeStyles = (network: string) => {
   const styles: { [key: string]: string } = {
     "JC Trans": "bg-orange-50 text-orange-700 border border-orange-200",
@@ -92,11 +158,15 @@ export const getNetworkBadgeStyles = (network: string) => {
     PPL: "bg-purple-50 text-purple-700 border border-purple-200",
     Connecta: "bg-green-50 text-green-700 border border-green-200",
     MarcoPolo: "bg-amber-50 text-amber-700 border border-amber-200",
+    // Custom rose colored badge style added for AerOceaNetwork (AON) agents
+    AON: "bg-rose-50 text-rose-700 border border-rose-200",
   };
   return styles[network] || "bg-slate-100 text-slate-700 border border-slate-200";
 };
 
-// Icon Components
+// ---- Inline SVG icon components used across the agent pages ----
+
+// Magnifying glass icon for search inputs
 export function SearchIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -106,6 +176,7 @@ export function SearchIcon() {
   );
 }
 
+// Small down arrow used on dropdown triggers
 export function ChevronDownIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -114,6 +185,7 @@ export function ChevronDownIcon() {
   );
 }
 
+// Right arrow used on clickable table rows
 export function ChevronRightIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -122,6 +194,7 @@ export function ChevronRightIcon() {
   );
 }
 
+// Back arrow for the "return to dashboard" button
 export function ArrowLeftIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -131,6 +204,7 @@ export function ArrowLeftIcon() {
   );
 }
 
+// Green check mark used in the "All sources loaded" badge
 export function CheckCircleIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-emerald-500">
@@ -140,6 +214,7 @@ export function CheckCircleIcon() {
   );
 }
 
+// Amber star for ratings
 export function StarIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className="text-amber-400">
@@ -148,6 +223,7 @@ export function StarIcon() {
   );
 }
 
+// Person silhouette used in the activity feed
 export function UserIcon() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -157,6 +233,9 @@ export function UserIcon() {
   );
 }
 
+// Invisible drag strip on the right edge of a table header cell.
+// The parent supplies the onMouseDown handler that starts the column resize;
+// clicks are stopped so resizing doesn't also trigger the header's sort.
 export function ResizeHandle({ onMouseDown }: { onMouseDown: (e: React.MouseEvent) => void }) {
   return (
     <div
@@ -167,6 +246,7 @@ export function ResizeHandle({ onMouseDown }: { onMouseDown: (e: React.MouseEven
   );
 }
 
+// Vertical up/down arrows shown next to office locations
 export function UpDownIcon() {
   return (
     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0 text-gray-400">
@@ -177,6 +257,7 @@ export function UpDownIcon() {
   );
 }
 
+// Small dot bullet shown before each contact chip
 export function ContactDotIcon() {
   return (
     <svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor" className="shrink-0 text-indigo-400">
@@ -185,6 +266,8 @@ export function ContactDotIcon() {
   );
 }
 
+// Sort indicator for table headers: gray double arrow when inactive,
+// a single indigo arrow (up = asc, down = desc) when the column is active.
 export function SortIcon({ active, order }: { active: boolean; order: "asc" | "desc" }) {
   if (!active) {
     return (
