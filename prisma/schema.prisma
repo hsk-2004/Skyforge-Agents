@@ -1,0 +1,27 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Agent {
+  id              String   @id @default(uuid())
+  company         String
+  financialStatus String?
+  fullAddress     String?
+  city            String?
+  country         String
+  rating          Float?
+  coverage        String?
+  operation       String?
+  transportMode   String?
+  services        String?
+  contacts        String?   // comma-separated or JSON list
+  segments        String?
+  networks        String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
