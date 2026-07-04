@@ -12,12 +12,12 @@ import {
   ChevronDownIcon,
   ArrowLeftIcon,
   CheckCircleIcon,
-  StarIcon,
   ResizeHandle,
   UpDownIcon,
   ContactDotIcon,
   SortIcon,
 } from "@/frontend/agentUi";
+import { motion } from "framer-motion";
 
 function ResultsContent() {
   const router = useRouter();
@@ -120,36 +120,32 @@ function ResultsContent() {
   // Fetch agents whenever filters or search query change (debounced 300ms
   // so we don't hit the API on every keystroke)
   useEffect(() => {
-    const delayDebounce = setTimeout(() => {
-      fetchAgents();
-    }, 300);
+    // Call the backend API with the active filters and store the returned agents
+    const fetchAgents = async () => {
+      setLoading(true);
+      try {
+        // Only include parameters for filters that are actually set
+        const params = new URLSearchParams();
+        if (searchQuery) params.append("search", searchQuery);
+        if (selectedCountry && selectedCountry !== "All") params.append("country", selectedCountry);
+        if (selectedNetwork && selectedNetwork !== "All") params.append("network", selectedNetwork);
+        if (selectedService && selectedService !== "All") params.append("service", selectedService);
 
-    return () => clearTimeout(delayDebounce);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchQuery, selectedCountry, selectedNetwork, selectedService]);
-
-  // Call the backend API with the active filters and store the returned agents
-  const fetchAgents = async () => {
-    setLoading(true);
-    try {
-      // Only include parameters for filters that are actually set
-      const params = new URLSearchParams();
-      if (searchQuery) params.append("search", searchQuery);
-      if (selectedCountry && selectedCountry !== "All") params.append("country", selectedCountry);
-      if (selectedNetwork && selectedNetwork !== "All") params.append("network", selectedNetwork);
-      if (selectedService && selectedService !== "All") params.append("service", selectedService);
-
-      const res = await fetch(`/api/agents?${params.toString()}`);
-      const data = await res.json();
-      if (data.success) {
-        setAgents(data.agents || []);
+        const res = await fetch(`/api/agents?${params.toString()}`);
+        const data = await res.json();
+        if (data.success) {
+          setAgents(data.agents || []);
+        }
+      } catch (err) {
+        console.error("Error fetching agents:", err);
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      console.error("Error fetching agents:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
+
+    const delayDebounce = setTimeout(fetchAgents, 300);
+    return () => clearTimeout(delayDebounce);
+  }, [searchQuery, selectedCountry, selectedNetwork, selectedService]);
 
   // Return to the home dashboard
   const handleBackToDashboard = () => {
@@ -160,7 +156,7 @@ function ResultsContent() {
   const processedAgents = agents
     .map((agent) => {
       // Inject mock data for fields empty in DB to make dashboard look rich and matched with screenshot
-      const mock = getDeterministicMockData(agent.id, agent.company);
+      const mock = getDeterministicMockData(agent.id);
       return {
         ...agent,
         rating: agent.rating ?? mock.rating,
@@ -177,8 +173,8 @@ function ResultsContent() {
     })
     .sort((a, b) => {
       // Pull the values for the active sort column
-      let valA: any = a[sortBy];
-      let valB: any = b[sortBy];
+      let valA: string | number | null = a[sortBy];
+      let valB: string | number | null = b[sortBy];
 
       if (sortBy === "networks") {
         valA = a.networksList.join(", ");
@@ -190,11 +186,13 @@ function ResultsContent() {
       if (valB === null || valB === undefined) return sortOrder === "asc" ? -1 : 1;
 
       // Strings compare alphabetically; numbers compare arithmetically
-      if (typeof valA === "string") {
+      if (typeof valA === "string" && typeof valB === "string") {
         return sortOrder === "asc" ? valA.localeCompare(valB) : valB.localeCompare(valA);
-      } else {
+      }
+      if (typeof valA === "number" && typeof valB === "number") {
         return sortOrder === "asc" ? valA - valB : valB - valA;
       }
+      return 0; // Mixed types shouldn't happen; keep original order
     });
 
   // Clicking a sortable header: same column flips direction, new column sorts ascending
@@ -342,8 +340,13 @@ function ResultsContent() {
           </div>
         </div>
 
-        {/* Results Table Container */}
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+        {/* Results Table Container — fades in on load */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, ease: "easeOut" }}
+          className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm"
+        >
           <div className="overflow-x-auto">
             <table
               className="text-left text-sm border-collapse table-fixed"
@@ -544,7 +547,7 @@ function ResultsContent() {
               </tbody>
             </table>
           </div>
-        </div>
+        </motion.div>
       </section>
     </main>
   );

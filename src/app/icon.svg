@@ -1,0 +1,17 @@
+<!-- Favicon: rounded indigo tile with a bold "S" lettermark and orange forge spark -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <!-- Subtle indigo gradient for depth -->
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#6366F1"/>
+      <stop offset="100%" stop-color="#4338CA"/>
+    </linearGradient>
+  </defs>
+  <!-- Rounded app-tile background -->
+  <rect width="64" height="64" rx="14" fill="url(#bg)"/>
+  <!-- Bold hand-drawn "S" curve for Skyforge -->
+  <path d="M44 20c-3-4-10-6-16-4c-6 2-8 8-4 12c3 3 9 3 14 5c6 2 8 8 4 12c-4 4-13 4-18-1"
+        fill="none" stroke="white" stroke-width="8" stroke-linecap="round"/>
+  <!-- Orange forge-spark accent dot -->
+  <circle cx="49" cy="13" r="6" fill="#F97316"/>
+</svg>

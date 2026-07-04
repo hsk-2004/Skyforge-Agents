@@ -18,12 +18,10 @@ export async function GET(request: Request) {
 
     // Success response: agents plus the dropdown option lists
     return NextResponse.json({ success: true, agents, countries, networks });
-  } catch (error: any) {
+  } catch (error) {
     // Log server-side and return a 500 so the client can show an error state
     console.error("Failed to fetch agents:", error);
-    return NextResponse.json(
-      { success: false, error: error.message || "Internal Server Error" },
-      { status: 500 }
-    );
+    const message = error instanceof Error ? error.message : "Internal Server Error";
+    return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }

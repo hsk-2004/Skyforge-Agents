@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Sidebar from "@/frontend/Sidebar";
+import { auth } from "@/backend/auth";
 
 // Primary sans-serif font, exposed as a CSS variable for Tailwind to use.
 const geistSans = Geist({
@@ -23,11 +24,13 @@ export const metadata: Metadata = {
 };
 
 // Layout component: renders the sidebar on the left and the active page content on the right.
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Read the session server-side so the sidebar can show who is signed in
+  const session = await auth();
   return (
     <html
       lang="en"
@@ -35,9 +38,9 @@ export default function RootLayout({
     >
       <body className="flex min-h-full bg-gray-100">
         {/* Fixed navigation rail (bottom bar on mobile, left column on desktop) */}
-        <Sidebar />
-        {/* Main scrollable content area; bottom padding on mobile clears the nav bar */}
-        <div className="min-w-0 flex-1 overflow-y-auto pb-16 md:pb-0">{children}</div>
+        <Sidebar userName={session?.user?.name} />
+        {/* Main scrollable content area; bottom padding on mobile clears the nav bar + safe area */}
+        <div className="min-w-0 flex-1 overflow-y-auto pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0">{children}</div>
       </body>
     </html>
   );

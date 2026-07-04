@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import GetStartedCard from "@/frontend/GetStartedCard";
 import { getFlagEmoji, SearchIcon, ChevronDownIcon, ChevronRightIcon, UserIcon } from "@/frontend/agentUi";
+import { motion } from "framer-motion";
 
 export default function LandingPage() {
   const router = useRouter();
@@ -59,8 +60,13 @@ export default function LandingPage() {
 
   return (
     <main className="mx-auto max-w-[1600px] px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
-      {/* Landing Homepage Dashboard */}
-      <section className="rounded-2xl bg-gray-200/60 p-5 sm:p-8 lg:p-10">
+      {/* Landing Homepage Dashboard — fades in on load */}
+      <motion.section
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
+        className="rounded-2xl bg-gray-200/60 p-5 sm:p-8 lg:p-10"
+      >
         <h1 className="text-center text-2xl font-semibold text-gray-900 sm:text-3xl lg:text-4xl">
           Which agent do you{" "}
           <span className="text-indigo-500">need today?</span>
@@ -138,10 +144,15 @@ export default function LandingPage() {
             ctaLabel="Invite Teammates"
           />
         </div>
-      </section>
+      </motion.section>
 
-      {/* Bottom stats/activity grid */}
-      <section className="mt-8 grid grid-cols-1 gap-6 xl:grid-cols-[1fr_380px]">
+      {/* Bottom stats/activity grid — fades in slightly after the hero */}
+      <motion.section
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.15, ease: "easeOut" }}
+        className="mt-8 grid grid-cols-1 gap-6 xl:grid-cols-[1fr_380px]"
+      >
         {/* Shortlist Coverage */}
         <div className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-6">
           <h3 className="text-lg font-semibold text-gray-900">
@@ -254,7 +265,7 @@ export default function LandingPage() {
             ))}
           </div>
         </div>
-      </section>
+      </motion.section>
     </main>
   );
 }

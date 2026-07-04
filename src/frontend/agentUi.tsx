@@ -110,7 +110,7 @@ export const getFlagEmoji = (countryName: string) => {
 };
 
 // Deterministically generate beautiful mock data for columns empty in DB
-export const getDeterministicMockData = (id: string, name: string) => {
+export const getDeterministicMockData = (id: string) => {
   // Simple character-code hash of the id so the same agent always gets the same mock values
   const hash = Array.from(id).reduce((acc, char) => acc + char.charCodeAt(0), 0);
 

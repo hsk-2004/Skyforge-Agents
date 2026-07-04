@@ -16,27 +16,28 @@ export async function getAgents({ search, country, network, service }: AgentFilt
   const where: Prisma.AgentWhereInput = {};
 
   // General search across company, city, and country
+  // (SQLite's `contains` is case-insensitive by default, so no mode flag needed)
   if (search) {
     where.OR = [
-      { company: { contains: search, mode: "insensitive" } },
-      { city: { contains: search, mode: "insensitive" } },
-      { country: { contains: search, mode: "insensitive" } },
+      { company: { contains: search } },
+      { city: { contains: search } },
+      { country: { contains: search } },
     ];
   }
 
   // Specific country filter
   if (country && country !== "All") {
-    where.country = { equals: country, mode: "insensitive" };
+    where.country = { equals: country };
   }
 
   // Specific network filter
   if (network && network !== "All") {
-    where.networks = { contains: network, mode: "insensitive" };
+    where.networks = { contains: network };
   }
 
   // Specific service filter
   if (service && service !== "All") {
-    where.services = { contains: service, mode: "insensitive" };
+    where.services = { contains: service };
   }
 
   // Query the matching agents, sorted alphabetically by company name

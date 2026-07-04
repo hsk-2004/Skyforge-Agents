@@ -2,11 +2,17 @@
 // Handles two sources — a base agents file (agents.xlsx/agents.csv) and an
 // AON network file (AON.xlsx with Members and Affiliates sheets).
 import { PrismaClient } from '@prisma/client';
+import { PrismaLibSql } from '@prisma/adapter-libsql';
 import * as XLSX from 'xlsx';
 import * as path from 'path';
 import * as fs from 'fs';
 
-const prisma = new PrismaClient();
+// Connect to Turso through the libSQL driver adapter (same as the app)
+const adapter = new PrismaLibSql({
+  url: process.env.TURSO_DATABASE_URL!,
+  authToken: process.env.TURSO_AUTH_TOKEN,
+});
+const prisma = new PrismaClient({ adapter });
 
 async function main() {
   const rootDir = path.join(__dirname, '..');
@@ -243,10 +249,80 @@ async function main() {
     console.log('No AON.xlsx spreadsheet found in root. Skipping AON agents seeding.');
   }
 
+  // 3. Seed scraped agents (mapper-scraped.xlsx) if present
+  const mapperFilePath = path.join(rootDir, 'mapper-scraped.xlsx');
+  let mapperAgentsCount = 0;
+
+  if (fs.existsSync(mapperFilePath)) {
+    console.log(`Loading scraped agents from: ${mapperFilePath}`);
+    const workbook = XLSX.readFile(mapperFilePath);
+    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+    const rawData: any[] = XLSX.utils.sheet_to_json(worksheet);
+    console.log(`Parsed ${rawData.length} rows from scraped agents sheet.`);
+
+    // Build a set of company+country keys already in the DB to skip duplicates
+    const existing = await prisma.agent.findMany({ select: { company: true, country: true } });
+    const existingKeys = new Set(existing.map(a => `${a.company.toLowerCase()}|${a.country.toLowerCase()}`));
+
+    const mapperAgents: any[] = [];
+    for (const row of rawData) {
+      const company = row['Agent'] ? String(row['Agent']).trim() : '';
+      const country = row['Country'] ? String(row['Country']).trim() : 'Unknown Country';
+      if (!company) continue; // skip rows without a company name
+
+      // Skip rows already present (from earlier seeds or previous runs)
+      const key = `${company.toLowerCase()}|${country.toLowerCase()}`;
+      if (existingKeys.has(key)) continue;
+      existingKeys.add(key);
+
+      // Office looks like "Country, City" — take the part after the comma as city
+      const office = row['Office'] ? String(row['Office']).trim() : '';
+      const officeParts = office.split(',').map((p: string) => p.trim()).filter(Boolean);
+      const city = officeParts.length > 1 ? officeParts.slice(1).join(', ') : null;
+
+      // Combine contact name, email and phone into the comma-separated contacts string
+      const contactParts = [row['Contact'], row['Email'], row['Phone']]
+        .map(v => (v ? String(v).trim() : ''))
+        .filter(Boolean);
+
+      mapperAgents.push({
+        company,
+        financialStatus: null,
+        fullAddress: office || null,
+        city,
+        country,
+        rating: null,
+        coverage: row['Coverage'] ? String(row['Coverage']).trim() : null,
+        operation: row['Operation'] ? String(row['Operation']).trim() : null,
+        transportMode: row['TransportMode'] ? String(row['TransportMode']).trim() : null,
+        services: row['Services'] ? String(row['Services']).trim() : null,
+        contacts: contactParts.join(',') || null,
+        segments: row['Segments'] ? String(row['Segments']).trim() : null,
+        networks: row['Networks'] ? String(row['Networks']).trim() : null,
+      });
+    }
+
+    if (mapperAgents.length > 0) {
+      console.log(`Inserting ${mapperAgents.length} scraped agents into database...`);
+      // Insert in chunks of 100, same as the other sources
+      const chunkSize = 100;
+      for (let i = 0; i < mapperAgents.length; i += chunkSize) {
+        await prisma.agent.createMany({ data: mapperAgents.slice(i, i + chunkSize) });
+      }
+      mapperAgentsCount = mapperAgents.length;
+      console.log(`Successfully seeded ${mapperAgentsCount} scraped agents into the database.`);
+    } else {
+      console.log('No new scraped agents to insert (all rows already exist in the database).');
+    }
+  } else {
+    console.log('No mapper-scraped.xlsx spreadsheet found in root. Skipping scraped agents seeding.');
+  }
+
   console.log('\n============================================================');
   console.log('Seeding completed successfully!');
   if (baseAgentsCount > 0) console.log(` - Base agents seeded: ${baseAgentsCount}`);
   if (aonAgentsCount > 0) console.log(` - AON agents seeded: ${aonAgentsCount}`);
+  if (mapperAgentsCount > 0) console.log(` - Scraped agents seeded: ${mapperAgentsCount}`);
   console.log('============================================================\n');
 }
 
