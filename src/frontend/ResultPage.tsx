@@ -6,12 +6,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 import {
   Agent,
   getFlagEmoji,
-  getDeterministicMockData,
   getNetworkBadgeStyles,
   SearchIcon,
   ChevronDownIcon,
   ArrowLeftIcon,
-  CheckCircleIcon,
   ResizeHandle,
   UpDownIcon,
   ContactDotIcon,
@@ -31,7 +29,6 @@ function ResultsContent() {
 
   // Toggle states
   const [shortlistOnly, setShortlistOnly] = useState(false);
-  const [considerCoverage, setConsiderCoverage] = useState(false);
 
   // Sorting
   const [sortBy, setSortBy] = useState<"company" | "rating" | "country" | "networks">("company");
@@ -96,15 +93,16 @@ function ResultsContent() {
 
   // Data states
   const [agents, setAgents] = useState<Agent[]>([]);
+  const [totalAgents, setTotalAgents] = useState(0); // full match count (rows are capped server-side)
   const [countries, setCountries] = useState<string[]>([]);
   const [networks, setNetworks] = useState<string[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true); // true from the start so the first paint shows the spinner, not "no agents"
 
-  // Fetch initial filter data (countries, networks)
+  // Fetch initial filter data (countries, networks) — meta=1 skips the heavy agent rows
   useEffect(() => {
     async function fetchFilters() {
       try {
-        const res = await fetch("/api/agents");
+        const res = await fetch("/api/agents?meta=1");
         const data = await res.json();
         if (data.success) {
           setCountries(data.countries || []);
@@ -135,6 +133,7 @@ function ResultsContent() {
         const data = await res.json();
         if (data.success) {
           setAgents(data.agents || []);
+          setTotalAgents(data.total ?? (data.agents || []).length);
         }
       } catch (err) {
         console.error("Error fetching agents:", err);
@@ -154,16 +153,12 @@ function ResultsContent() {
 
   // Sort and filter client-side for fast interaction (like toggles)
   const processedAgents = agents
-    .map((agent) => {
-      // Inject mock data for fields empty in DB to make dashboard look rich and matched with screenshot
-      const mock = getDeterministicMockData(agent.id);
-      return {
-        ...agent,
-        rating: agent.rating ?? mock.rating,
-        contactsList: agent.contacts ? agent.contacts.split(",") : mock.contacts,
-        networksList: agent.networks ? agent.networks.split(",") : mock.networks,
-      };
-    })
+    .map((agent) => ({
+      // Split the comma-separated DB fields into lists; empty fields stay empty (no mock data)
+      ...agent,
+      contactsList: agent.contacts ? agent.contacts.split(",") : [],
+      networksList: agent.networks ? agent.networks.split(",") : [],
+    }))
     .filter((agent) => {
       // Shortlist Only filter: show only agents that don't have credit stop
       if (shortlistOnly && agent.financialStatus === "Credit stop") {
@@ -224,8 +219,7 @@ function ResultsContent() {
             <div className="flex w-full min-w-0 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm focus-within:ring-2 focus-within:ring-indigo-500 sm:w-auto sm:flex-1 md:max-w-96">
               <div className="flex shrink-0 items-center gap-1 border-r border-gray-200 px-3 py-2 text-gray-500 bg-gray-50/50">
                 <SearchIcon />
-                <span className="hidden text-xs font-medium whitespace-nowrap sm:inline">By country</span>
-                <ChevronDownIcon />
+                <span className="hidden text-xs font-medium whitespace-nowrap sm:inline">Search</span>
               </div>
               <input
                 type="text"
@@ -236,16 +230,7 @@ function ResultsContent() {
               />
             </div>
 
-            {/* Loaded badge */}
-            <div className="hidden items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700 border border-emerald-200 lg:flex">
-              <CheckCircleIcon />
-              <span>All sources loaded</span>
-            </div>
           </div>
-
-          <button className="shrink-0 whitespace-nowrap rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700">
-            + Add Agent
-          </button>
         </div>
 
         {/* Filters Bar */}
@@ -307,14 +292,11 @@ function ResultsContent() {
               </div>
             </div>
 
-            <button className="flex items-center gap-1 rounded-lg border border-dashed border-gray-300 bg-transparent px-3 py-1.5 text-xs font-medium text-indigo-600 hover:bg-gray-50">
-              + Add Filter
-            </button>
           </div>
 
           {/* Toggle Switches */}
           <div className="flex flex-wrap items-center gap-2 sm:gap-4">
-            {/* Shortlist Only */}
+            {/* Shortlist Only — hides agents flagged with a credit stop */}
             <button
               onClick={() => setShortlistOnly(!shortlistOnly)}
               className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
@@ -324,18 +306,6 @@ function ResultsContent() {
               }`}
             >
               Shortlist Only
-            </button>
-
-            {/* Consider Coverage */}
-            <button
-              onClick={() => setConsiderCoverage(!considerCoverage)}
-              className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
-                considerCoverage
-                  ? "bg-indigo-50 border-indigo-200 text-indigo-700"
-                  : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
-              }`}
-            >
-              Consider Coverage
             </button>
           </div>
         </div>
@@ -365,7 +335,7 @@ function ResultsContent() {
                     onClick={() => toggleSort("company")}
                   >
                     <div className="flex items-center gap-1.5">
-                      <span>Agent ({processedAgents.length})</span>
+                      <span>Agent ({totalAgents})</span>
                       <SortIcon active={sortBy === "company"} order={sortOrder} />
                     </div>
                     <ResizeHandle onMouseDown={handleResizeStart("company")} />
@@ -511,6 +481,7 @@ function ResultsContent() {
                       {/* Contacts */}
                       <td className="border-r border-gray-100 px-6 py-4">
                         <div className="flex flex-col gap-1">
+                          {agent.contactsList.length === 0 && <span className="text-gray-300 text-xs">—</span>}
                           {agent.contactsList.map((contact, idx) => (
                             <span
                               key={idx}
@@ -529,6 +500,7 @@ function ResultsContent() {
                       {/* Networks */}
                       <td className="px-6 py-4">
                         <div className="flex flex-wrap gap-1">
+                          {agent.networksList.length === 0 && <span className="text-gray-300 text-xs">—</span>}
                           {agent.networksList.map((network, idx) => (
                             <span
                               key={idx}
@@ -547,6 +519,12 @@ function ResultsContent() {
               </tbody>
             </table>
           </div>
+          {/* Cap notice: server limits rows per response; narrow the search to see the rest */}
+          {!loading && totalAgents > agents.length && (
+            <div className="border-t border-gray-200 bg-gray-50 px-4 py-2.5 text-center text-xs text-gray-500">
+              Showing the first {agents.length.toLocaleString()} of {totalAgents.toLocaleString()} matching agents — refine your search or filters to narrow the results.
+            </div>
+          )}
         </motion.div>
       </section>
     </main>

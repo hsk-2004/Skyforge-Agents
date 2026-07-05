@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+/* App is light-themed only; colors are pinned so OS dark mode
+   doesn't swap in light text on the light backgrounds. */
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -12,15 +14,19 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: #f3f4f6;
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  /* Use the loaded Geist font, falling back to system sans */
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+}
+
+/* iOS Safari auto-zooms when a focused input's font size is under 16px.
+   Force 16px on touch-sized screens (!important to beat Tailwind's text-sm). */
+@media (max-width: 767px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
 }

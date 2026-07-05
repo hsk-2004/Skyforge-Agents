@@ -11,13 +11,14 @@ export async function GET(request: Request) {
       country: searchParams.get("country") || "",
       network: searchParams.get("network") || "",
       service: searchParams.get("service") || "",
+      metaOnly: searchParams.get("meta") === "1", // counts + dropdown lists only
     };
 
     // Delegate the actual database work to the backend service
-    const { agents, countries, networks } = await getAgents(filters);
+    const { agents, total, countries, networks, topCountries } = await getAgents(filters);
 
-    // Success response: agents plus the dropdown option lists
-    return NextResponse.json({ success: true, agents, countries, networks });
+    // Success response: agents plus the total count and dropdown option lists
+    return NextResponse.json({ success: true, agents, total, countries, networks, topCountries });
   } catch (error) {
     // Log server-side and return a 500 so the client can show an error state
     console.error("Failed to fetch agents:", error);

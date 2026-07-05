@@ -109,46 +109,6 @@ export const getFlagEmoji = (countryName: string) => {
   return code[countryName] || "🏳️";
 };
 
-// Deterministically generate beautiful mock data for columns empty in DB
-export const getDeterministicMockData = (id: string) => {
-  // Simple character-code hash of the id so the same agent always gets the same mock values
-  const hash = Array.from(id).reduce((acc, char) => acc + char.charCodeAt(0), 0);
-
-  const mockContactsList = [
-    ["Gabriel Ferrari", "Franyer Mald..."],
-    ["Mr. Alex Gia..."],
-    ["CARLOS BIDAB...", "Manuela Pala..."],
-    ["Claudio Spal..."],
-    ["Alonso Logis..."],
-    ["GASTON ARIEL...", "FRANCO PARED"],
-    ["ARGENTINA CA...", "Mr Hernan Ca..."],
-    ["CEO / Presid...", "Director - M...", "Overseas Man..."],
-    ["Elena Rostova", "Sergei Ivanov"],
-    ["Koji Tanaka", "Yuki Sato"],
-  ];
-
-  const mockNetworksList = [
-    ["IAN"],
-    ["JC Trans"],
-    ["MGLN"],
-    ["PPL"],
-    ["JC Trans", "Connecta"],
-    ["MarcoPolo"],
-    ["IAN", "PPL"],
-    ["MGLN", "JC Trans"],
-    ["Connecta"],
-    ["MarcoPolo", "IAN"],
-  ];
-
-  // Pick mock values from the pools above based on the hash (rating range 3.8–4.9)
-  const ratingValue = 3.8 + (hash % 12) / 10;
-  const contacts = mockContactsList[hash % mockContactsList.length];
-  const networks = mockNetworksList[hash % mockNetworksList.length];
-  const rating = hash % 3 === 0 ? null : parseFloat(ratingValue.toFixed(1)); // Some blank ratings like screenshot
-
-  return { contacts, networks, rating };
-};
-
 // Return Tailwind classes for a network badge, giving each network its own color
 export const getNetworkBadgeStyles = (network: string) => {
   const styles: { [key: string]: string } = {

@@ -7,15 +7,10 @@ import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { useState } from "react";
 
-// Navigation entries; `href` is set only for routes that exist today —
-// the rest render as disabled "coming soon" placeholders.
-const navItems: { label: string; icon: React.ComponentType<{ active?: boolean }>; href?: string }[] = [
+// Navigation entries — only real routes, no placeholder items
+const navItems: { label: string; icon: React.ComponentType<{ active?: boolean }>; href: string }[] = [
   { label: "Dashboard", icon: GridIcon, href: "/" },
   { label: "Agents", icon: BookmarkIcon, href: "/results" },
-  { label: "Notifications", icon: BellIcon },
-  { label: "Chat", icon: ChatIcon },
-  { label: "Mail", icon: MailIcon },
-  { label: "Help", icon: HelpIcon },
 ];
 
 export default function Sidebar({ userName }: { userName?: string | null }) {
@@ -47,32 +42,20 @@ export default function Sidebar({ userName }: { userName?: string | null }) {
       {/* Navigation icon buttons, built from the navItems list above */}
       <nav aria-label="Main navigation" className="flex min-w-0 flex-1 flex-row items-center justify-around gap-1 md:flex-col md:justify-start md:gap-4">
         {navItems.map(({ label, icon: Icon, href }) => {
-          const active = href !== undefined && pathname === href;
-          // Real route → link; unbuilt feature → visibly disabled button
-          return href ? (
+          const active = pathname === href;
+          return (
             <Link
               key={label}
               href={href}
               aria-label={label}
               aria-current={active ? "page" : undefined}
               title={label}
-              className={`flex h-10 w-10 items-center justify-center rounded-lg transition-colors md:h-10 md:w-10 ${
+              className={`flex h-10 w-10 items-center justify-center rounded-lg transition-colors ${
                 active ? "bg-indigo-50 text-indigo-600" : "text-gray-400 hover:text-gray-600"
               }`}
             >
               <Icon active={active} />
             </Link>
-          ) : (
-            <button
-              key={label}
-              type="button"
-              disabled
-              aria-label={`${label} (coming soon)`}
-              title={`${label} — coming soon`}
-              className="hidden h-10 w-10 cursor-not-allowed items-center justify-center rounded-lg text-gray-300 sm:flex"
-            >
-              <Icon />
-            </button>
           );
         })}
       </nav>
@@ -147,51 +130,11 @@ function GridIcon({ active }: { active?: boolean }) {
   );
 }
 
-// Notifications bell icon
-function BellIcon() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-      <path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
-      <path d="M13.73 21a2 2 0 01-3.46 0" />
-    </svg>
-  );
-}
-
 // Agents list / saved items icon; strokes indigo when active
 function BookmarkIcon({ active }: { active?: boolean }) {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? "#4F46E5" : "currentColor"} strokeWidth="1.8">
       <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" />
-    </svg>
-  );
-}
-
-// Chat / messaging icon
-function ChatIcon() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-      <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
-    </svg>
-  );
-}
-
-// Mail / inbox icon
-function MailIcon() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-      <rect x="2" y="4" width="20" height="16" rx="2" />
-      <path d="M2 6l10 7 10-7" />
-    </svg>
-  );
-}
-
-// Help / support icon (question mark in a circle)
-function HelpIcon() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-      <circle cx="12" cy="12" r="10" />
-      <path d="M9.5 9a2.5 2.5 0 015 .5c0 1.5-2.5 2-2.5 3.5" />
-      <path d="M12 17h.01" />
     </svg>
   );
 }

@@ -8,10 +8,14 @@ export interface AgentFilters {
   country: string;
   network: string;
   service: string;
+  metaOnly?: boolean; // skip the row query; only return counts + dropdown lists
 }
 
+// Cap rows per response so unfiltered searches don't ship/render 15k+ rows
+const MAX_RESULTS = 500;
+
 // Fetch agents matching the filters, plus the dropdown option lists
-export async function getAgents({ search, country, network, service }: AgentFilters) {
+export async function getAgents({ search, country, network, service, metaOnly }: AgentFilters) {
   // Build the Prisma WHERE clause from whichever filters were provided
   const where: Prisma.AgentWhereInput = {};
 
@@ -40,11 +44,15 @@ export async function getAgents({ search, country, network, service }: AgentFilt
     where.services = { contains: service };
   }
 
-  // Query the matching agents, sorted alphabetically by company name
-  const agents = await prisma.agent.findMany({
-    where,
-    orderBy: { company: "asc" },
-  });
+  // Total match count (cheap) plus the capped row query, skipped in meta-only mode
+  const total = await prisma.agent.count({ where });
+  const agents = metaOnly
+    ? []
+    : await prisma.agent.findMany({
+        where,
+        orderBy: { company: "asc" },
+        take: MAX_RESULTS,
+      });
 
   // Fetch unique countries for the UI dropdown
   const countriesResult = await prisma.agent.findMany({
@@ -71,5 +79,14 @@ export async function getAgents({ search, country, network, service }: AgentFilt
   });
   const networks = Array.from(networksSet).sort();
 
-  return { agents, countries, networks };
+  // Top 5 countries by agent count (drives the landing page coverage table)
+  const topCountriesRaw = await prisma.agent.groupBy({
+    by: ["country"],
+    _count: { country: true },
+    orderBy: { _count: { country: "desc" } },
+    take: 5,
+  });
+  const topCountries = topCountriesRaw.map((t) => ({ country: t.country, count: t._count.country }));
+
+  return { agents, total, countries, networks, topCountries };
 }
