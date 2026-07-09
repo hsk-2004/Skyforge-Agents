@@ -90,3 +90,8 @@ export async function getAgents({ search, country, network, service, metaOnly }:
 
   return { agents, total, countries, networks, topCountries };
 }
+
+// Fetch a single agent by id for the profile page; returns null when not found
+export async function getAgentById(id: string) {
+  return prisma.agent.findUnique({ where: { id } });
+}

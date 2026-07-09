@@ -17,6 +17,7 @@ export interface Agent {
   contacts: string | null;
   segments: string | null;
   networks: string | null;
+  createdAt?: string; // ISO timestamp of when the record was imported
 }
 
 // Map a country name to its flag emoji; falls back to a white flag if unknown

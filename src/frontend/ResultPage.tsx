@@ -441,7 +441,13 @@ function ResultsContent() {
                             {agent.company.slice(0, 2).toUpperCase()}
                           </div>
                           <div>
-                            <span className="font-medium text-gray-900 block">{agent.company}</span>
+                            {/* Company name links to the agent profile page */}
+                            <button
+                              onClick={() => router.push(`/agents/${agent.id}`)}
+                              className="block text-left font-medium text-gray-900 hover:text-indigo-600 hover:underline"
+                            >
+                              {agent.company}
+                            </button>
                             {agent.financialStatus === "Credit stop" && (
                               <span className="inline-block mt-0.5 rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-semibold text-red-700">
                                 Credit Stop
