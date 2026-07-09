@@ -2,13 +2,13 @@
 // Handles two sources — a base agents file (agents.xlsx/agents.csv) and an
 // AON network file (AON.xlsx with Members and Affiliates sheets).
 import { PrismaClient } from '@prisma/client';
-import { PrismaLibSql } from '@prisma/adapter-libsql';
+import { PrismaLibSQL } from '@prisma/adapter-libsql';
 import * as XLSX from 'xlsx';
 import * as path from 'path';
 import * as fs from 'fs';
 
 // Connect to Turso through the libSQL driver adapter (same as the app)
-const adapter = new PrismaLibSql({
+const adapter = new PrismaLibSQL({
   url: process.env.TURSO_DATABASE_URL!,
   authToken: process.env.TURSO_AUTH_TOKEN,
 });
