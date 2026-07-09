@@ -4,7 +4,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Agent, getFlagEmoji, getNetworkBadgeStyles, ArrowLeftIcon } from "@/frontend/agentUi";
+import { Agent, getFlagEmoji, getNetworkBadgeStyles, ArrowLeftIcon, AgentLogo } from "@/frontend/agentUi";
 import { motion } from "framer-motion";
 
 export default function AgentProfilePage() {
@@ -65,7 +65,6 @@ export default function AgentProfilePage() {
   const names = tokens.filter((t) => !emails.includes(t) && !phones.includes(t));
 
   const networksList = (agent.networks || "").split(",").map((n) => n.trim()).filter(Boolean);
-  const initials = agent.company.slice(0, 2).toUpperCase();
 
   // Overview fields straight from the database; empty ones render "—"
   const overviewFields: { label: string; value: React.ReactNode }[] = [
@@ -110,10 +109,8 @@ export default function AgentProfilePage() {
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             {/* Profile card */}
             <div className="flex flex-col items-center gap-3 rounded-2xl bg-white p-6 shadow-sm">
-              {/* Logo circle with company initials */}
-              <div className="flex h-24 w-24 items-center justify-center rounded-full border border-gray-200 bg-white text-2xl font-bold text-slate-400">
-                {initials}
-              </div>
+              {/* Company logo (falls back to initials) */}
+              <AgentLogo logo={agent.logo} company={agent.company} size={96} />
               <h1 className="text-center text-xl font-semibold text-gray-900">{agent.company}</h1>
               {agent.financialStatus === "Credit stop" && (
                 <span className="rounded bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700">Credit Stop</span>
@@ -149,9 +146,7 @@ export default function AgentProfilePage() {
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   <div className="overflow-hidden rounded-xl bg-white shadow-sm">
                     <div className="flex flex-col items-center gap-1 px-4 pt-5 pb-3">
-                      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gray-100 text-sm font-semibold text-slate-400">
-                        {initials}
-                      </div>
+                      <AgentLogo logo={agent.logo} company={agent.company} size={56} />
                       <div className="mt-1 max-w-full truncate text-sm font-semibold text-gray-900">
                         {names[0] || agent.company}
                       </div>

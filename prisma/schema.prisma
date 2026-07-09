@@ -34,6 +34,17 @@ model Agent {
   contacts        String?   // comma-separated or JSON list
   segments        String?
   networks        String?
+  logo            String?  // company logo image URL
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+}
+
+// Per-user shortlist: one row links a user to a saved agent
+model Shortlist {
+  id        String   @id @default(uuid())
+  userId    String
+  agentId   String
+  createdAt DateTime @default(now())
+
+  @@unique([userId, agentId]) // an agent can be shortlisted once per user
 }

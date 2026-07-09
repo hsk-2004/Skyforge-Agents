@@ -11,6 +11,7 @@ import { useState } from "react";
 const navItems: { label: string; icon: React.ComponentType<{ active?: boolean }>; href: string }[] = [
   { label: "Dashboard", icon: GridIcon, href: "/" },
   { label: "Agents", icon: BookmarkIcon, href: "/results" },
+  { label: "Shortlist", icon: StarIcon, href: "/shortlist" },
 ];
 
 export default function Sidebar({ userName }: { userName?: string | null }) {
@@ -126,6 +127,15 @@ function GridIcon({ active }: { active?: boolean }) {
       <rect x="13" y="3" width="8" height="8" rx="1.5" fill={active ? "#4F46E5" : "currentColor"} />
       <rect x="3" y="13" width="8" height="8" rx="1.5" fill={active ? "#4F46E5" : "currentColor"} />
       <rect x="13" y="13" width="8" height="8" rx="1.5" fill={active ? "#4F46E5" : "currentColor"} />
+    </svg>
+  );
+}
+
+// Shortlist star icon; strokes indigo when active
+function StarIcon({ active }: { active?: boolean }) {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill={active ? "#4F46E5" : "none"} stroke={active ? "#4F46E5" : "currentColor"} strokeWidth="1.8">
+      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
     </svg>
   );
 }

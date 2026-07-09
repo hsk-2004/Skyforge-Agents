@@ -17,7 +17,37 @@ export interface Agent {
   contacts: string | null;
   segments: string | null;
   networks: string | null;
+  logo?: string | null; // company logo image URL
   createdAt?: string; // ISO timestamp of when the record was imported
+}
+
+// Company logo avatar: shows the logo image, falling back to initials when
+// there is no logo or the image fails to load.
+export function AgentLogo({ logo, company, size = 36 }: { logo?: string | null; company: string; size?: number }) {
+  return (
+    <div
+      style={{ width: size, height: size }}
+      className="flex shrink-0 items-center justify-center overflow-hidden rounded-full border border-gray-200 bg-white text-xs font-semibold text-slate-400"
+    >
+      {logo ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={logo}
+          alt={`${company} logo`}
+          loading="lazy"
+          className="h-full w-full object-contain"
+          // Swap to initials if the remote image 404s
+          onError={(e) => {
+            const el = e.currentTarget;
+            el.style.display = "none";
+            if (el.parentElement) el.parentElement.textContent = company.slice(0, 2).toUpperCase();
+          }}
+        />
+      ) : (
+        company.slice(0, 2).toUpperCase()
+      )}
+    </div>
+  );
 }
 
 // Map a country name to its flag emoji; falls back to a white flag if unknown

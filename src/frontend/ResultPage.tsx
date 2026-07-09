@@ -14,6 +14,7 @@ import {
   UpDownIcon,
   ContactDotIcon,
   SortIcon,
+  AgentLogo,
 } from "@/frontend/agentUi";
 import { motion } from "framer-motion";
 
@@ -29,6 +30,65 @@ function ResultsContent() {
 
   // Toggle states
   const [shortlistOnly, setShortlistOnly] = useState(false);
+
+  // Toast message shown briefly after shortlist actions
+  const [toast, setToast] = useState("");
+  const showToast = (message: string) => {
+    setToast(message);
+    setTimeout(() => setToast(""), 2500); // auto-hide after 2.5s
+  };
+
+  // Ids of agents the user has shortlisted (loaded once, updated optimistically)
+  const [shortlistedIds, setShortlistedIds] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    fetch("/api/shortlist?ids=1")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.success) setShortlistedIds(new Set<string>(d.ids || []));
+      })
+      .catch(() => {});
+  }, []);
+
+  // Add/remove a single agent from the shortlist (chip click)
+  const toggleShortlist = async (agentId: string) => {
+    const isSaved = shortlistedIds.has(agentId);
+    setShortlistedIds((prev) => {
+      const next = new Set(prev);
+      if (isSaved) next.delete(agentId);
+      else next.add(agentId);
+      return next;
+    });
+    await fetch("/api/shortlist", {
+      method: isSaved ? "DELETE" : "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(isSaved ? { agentId } : { agentIds: [agentId] }),
+    });
+    showToast(isSaved ? "Agent removed from shortlist" : "Agent added to shortlist successfully");
+  };
+
+  // Row selection (checkboxes revealed on row hover)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const toggleSelected = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  // Add every selected agent to the shortlist (action bar button)
+  const shortlistSelected = async () => {
+    const ids = [...selectedIds];
+    setShortlistedIds((prev) => new Set([...prev, ...ids]));
+    setSelectedIds(new Set());
+    await fetch("/api/shortlist", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ agentIds: ids }),
+    });
+    showToast(`${ids.length} agent${ids.length > 1 ? "s" : ""} added to shortlist successfully`);
+  };
 
   // Sorting
   const [sortBy, setSortBy] = useState<"company" | "rating" | "country" | "networks">("company");
@@ -204,8 +264,12 @@ function ResultsContent() {
     <main className="mx-auto max-w-[1600px] px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
       {/* High Fidelity Search Interface (Matches Second Screenshot) */}
       <section className="flex flex-col gap-6">
-        {/* Top Search Controls Header */}
-        <div className="flex flex-wrap items-center justify-between gap-3 sm:gap-4">
+        {/* Top Search Controls Header — blurred while a selection is active */}
+        <div
+          className={`flex flex-wrap items-center justify-between gap-3 transition-all sm:gap-4 ${
+            selectedIds.size > 0 ? "pointer-events-none blur-[1px] opacity-75 select-none" : ""
+          }`}
+        >
           <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3 sm:gap-4">
             <button
               onClick={handleBackToDashboard}
@@ -233,8 +297,12 @@ function ResultsContent() {
           </div>
         </div>
 
-        {/* Filters Bar */}
-        <div className="flex flex-wrap items-center justify-between gap-4 border-t border-gray-200 pt-4">
+        {/* Filters Bar — blurred while a selection is active */}
+        <div
+          className={`flex flex-wrap items-center justify-between gap-4 border-t border-gray-200 pt-4 transition-all ${
+            selectedIds.size > 0 ? "pointer-events-none blur-[1px] opacity-75 select-none" : ""
+          }`}
+        >
           <div className="flex flex-wrap items-center gap-2">
             {/* Country Select Filter */}
             <div className="relative">
@@ -309,6 +377,44 @@ function ResultsContent() {
             </button>
           </div>
         </div>
+
+        {/* Selection action bar — appears when at least one agent is checked */}
+        {selectedIds.size > 0 && (
+          <div className="flex flex-wrap items-stretch gap-px overflow-hidden rounded-lg shadow-sm w-fit border border-gray-200">
+            <div className="flex items-center gap-2 bg-indigo-50 px-4 py-2.5 text-sm font-medium text-indigo-700">
+              <span>
+                {selectedIds.size} agent{selectedIds.size > 1 ? "s" : ""} selected
+              </span>
+              {/* Clear the whole selection */}
+              <button
+                onClick={() => setSelectedIds(new Set())}
+                aria-label="Clear selection"
+                className="text-indigo-500 hover:text-indigo-800"
+              >
+                ✕
+              </button>
+            </div>
+            <button
+              onClick={shortlistSelected}
+              className="bg-white px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              Add to Shortlist
+            </button>
+            <button
+              onClick={() => {
+                // Collect the selected agents' email addresses and open the mail client
+                const emails = agents
+                  .filter((a) => selectedIds.has(a.id) && a.contacts)
+                  .flatMap((a) => a.contacts!.split(",").map((t) => t.trim()))
+                  .filter((t) => t.includes("@"));
+                if (emails.length > 0) window.location.href = `mailto:${[...new Set(emails)].join(",")}`;
+              }}
+              className="bg-white px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              Send E-mail
+            </button>
+          </div>
+        )}
 
         {/* Results Table Container — fades in on load */}
         <motion.div
@@ -429,17 +535,25 @@ function ResultsContent() {
                   processedAgents.map((agent) => (
                     <tr
                       key={agent.id}
-                      className={`hover:bg-slate-50/50 transition-colors ${
+                      className={`group hover:bg-slate-50/50 transition-colors ${
                         agent.financialStatus === "Credit stop" ? "bg-red-50/20" : ""
                       }`}
                     >
                       {/* Agent / Company */}
-                      <td className="border-r border-gray-100 px-6 py-4">
+                      <td className="relative border-r border-gray-100 px-6 py-4">
                         <div className="flex items-center gap-3">
-                          {/* Logo circle */}
-                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white border border-gray-200 text-xs font-semibold text-slate-400 overflow-hidden">
-                            {agent.company.slice(0, 2).toUpperCase()}
-                          </div>
+                          {/* Selection checkbox — revealed on hover, stays visible once checked */}
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.has(agent.id)}
+                            onChange={() => toggleSelected(agent.id)}
+                            aria-label={`Select ${agent.company}`}
+                            className={`h-4 w-4 shrink-0 cursor-pointer rounded border-gray-300 accent-indigo-600 transition-opacity group-hover:opacity-100 ${
+                              selectedIds.has(agent.id) ? "opacity-100" : "opacity-0"
+                            }`}
+                          />
+                          {/* Company logo (falls back to initials) */}
+                          <AgentLogo logo={agent.logo} company={agent.company} size={36} />
                           <div>
                             {/* Company name links to the agent profile page */}
                             <button
@@ -448,13 +562,36 @@ function ResultsContent() {
                             >
                               {agent.company}
                             </button>
-                            {agent.financialStatus === "Credit stop" && (
+                            {/* Status chip under the name; Shortlist chip toggles saving the agent */}
+                            {agent.financialStatus === "Credit stop" ? (
                               <span className="inline-block mt-0.5 rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-semibold text-red-700">
                                 Credit Stop
                               </span>
+                            ) : (
+                              <button
+                                onClick={() => toggleShortlist(agent.id)}
+                                title={shortlistedIds.has(agent.id) ? "Remove from shortlist" : "Add to shortlist"}
+                                className={`mt-0.5 inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium transition-colors ${
+                                  shortlistedIds.has(agent.id)
+                                    ? "bg-cyan-100 text-cyan-800"
+                                    : "border border-dashed border-gray-300 text-gray-400 hover:border-cyan-300 hover:text-cyan-700"
+                                }`}
+                              >
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill={shortlistedIds.has(agent.id) ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
+                                  <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" />
+                                </svg>
+                                {shortlistedIds.has(agent.id) ? "Shortlist" : "+ Shortlist"}
+                              </button>
                             )}
                           </div>
                         </div>
+                        {/* "Profile" button pinned top-right, visible while hovering the row */}
+                        <button
+                          onClick={() => router.push(`/agents/${agent.id}`)}
+                          className="absolute right-2 top-2 rounded-md border border-gray-200 bg-white px-2.5 py-1 text-xs font-medium text-gray-700 opacity-0 shadow-sm transition-opacity hover:bg-gray-50 focus:opacity-100 group-hover:opacity-100"
+                        >
+                          Profile
+                        </button>
                       </td>
 
                       {/* Rating (Kept empty per user request) */}
@@ -533,6 +670,20 @@ function ResultsContent() {
           )}
         </motion.div>
       </section>
+
+      {/* Success toast for shortlist actions */}
+      {toast && (
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="fixed bottom-20 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 rounded-full bg-gray-900 px-4 py-2.5 text-sm font-medium text-white shadow-lg md:bottom-6"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="2.5">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+          {toast}
+        </motion.div>
+      )}
     </main>
   );
 }
