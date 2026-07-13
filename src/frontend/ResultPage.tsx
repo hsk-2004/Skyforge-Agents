@@ -22,7 +22,9 @@ function ResultsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Filter state, initialised from the URL query string where available
+  // Filter state, initialised from the URL query string where available.
+  // searchInput = live text in the box; searchQuery = the applied search that filters the table.
+  const [searchInput, setSearchInput] = useState(searchParams.get("q") || "");
   const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
   const [selectedCountry, setSelectedCountry] = useState(searchParams.get("country") || "All");
   const [selectedNetwork, setSelectedNetwork] = useState("All");
@@ -253,11 +255,18 @@ function ResultsContent() {
       return 0; // Mixed types shouldn't happen; keep original order
     });
 
-  // Up to 8 countries whose names contain the current search text (case-insensitive)
+  // Up to 8 countries whose names contain the typed text (case-insensitive)
   const countrySuggestions =
-    searchQuery.trim().length > 0
-      ? countries.filter((c) => c.toLowerCase().includes(searchQuery.trim().toLowerCase())).slice(0, 8)
+    searchInput.trim().length > 0
+      ? countries.filter((c) => c.toLowerCase().includes(searchInput.trim().toLowerCase())).slice(0, 8)
       : [];
+
+  // Apply the typed text as the actual search that filters the table
+  const applySearch = (value: string) => {
+    setSearchInput(value);
+    setSearchQuery(value);
+    setShowSuggestions(false);
+  };
 
   // Clicking a sortable header: same column flips direction, new column sorts ascending
   const toggleSort = (field: "company" | "rating" | "country" | "networks") => {
@@ -298,19 +307,24 @@ function ResultsContent() {
                 <input
                   type="text"
                   placeholder="Enter country, city, or company name..."
-                  value={searchQuery}
+                  value={searchInput}
+                  // Typing only updates the box + suggestions; the table does NOT change yet
                   onChange={(e) => {
-                    setSearchQuery(e.target.value);
+                    setSearchInput(e.target.value);
                     setShowSuggestions(true);
                   }}
                   onFocus={() => setShowSuggestions(true)}
+                  // Enter applies the typed text as the actual search
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") applySearch(searchInput);
+                  }}
                   // Delay hiding so a click on a suggestion registers before blur closes it
                   onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
                   className="w-full min-w-0 px-3 py-2 text-sm text-gray-700 outline-none placeholder:text-gray-400"
                 />
               </div>
 
-              {/* Country suggestions dropdown */}
+              {/* Country suggestions dropdown — selecting one runs the search */}
               {showSuggestions && countrySuggestions.length > 0 && (
                 <ul className="absolute z-20 mt-1 w-full overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg">
                   {countrySuggestions.map((c) => (
@@ -318,10 +332,7 @@ function ResultsContent() {
                       <button
                         type="button"
                         onMouseDown={(e) => e.preventDefault()}
-                        onClick={() => {
-                          setSearchQuery(c);
-                          setShowSuggestions(false);
-                        }}
+                        onClick={() => applySearch(c)}
                         className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50"
                       >
                         <span>{getFlagEmoji(c)}</span>
