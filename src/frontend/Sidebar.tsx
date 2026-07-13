@@ -7,11 +7,11 @@ import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { useState } from "react";
 
-// Navigation entries — only real routes, no placeholder items
-const navItems: { label: string; icon: React.ComponentType<{ active?: boolean }>; href: string }[] = [
-  { label: "Dashboard", icon: GridIcon, href: "/" },
-  { label: "Agents", icon: BookmarkIcon, href: "/results" },
-  { label: "Shortlist", icon: StarIcon, href: "/shortlist" },
+// Navigation entries — only real routes, no placeholder items.
+// `match` decides when the item is highlighted (Dashboard also covers results/agent pages).
+const navItems: { label: string; icon: React.ComponentType<{ active?: boolean }>; href: string; match: (path: string) => boolean }[] = [
+  { label: "Dashboard", icon: GridIcon, href: "/", match: (p) => p === "/" || p.startsWith("/results") || p.startsWith("/agents") },
+  { label: "Shortlist", icon: BookmarkIcon, href: "/shortlist", match: (p) => p.startsWith("/shortlist") },
 ];
 
 export default function Sidebar({ userName }: { userName?: string | null }) {
@@ -42,8 +42,8 @@ export default function Sidebar({ userName }: { userName?: string | null }) {
 
       {/* Navigation icon buttons, built from the navItems list above */}
       <nav aria-label="Main navigation" className="flex min-w-0 flex-1 flex-row items-center justify-around gap-1 md:flex-col md:justify-start md:gap-4">
-        {navItems.map(({ label, icon: Icon, href }) => {
-          const active = pathname === href;
+        {navItems.map(({ label, icon: Icon, href, match }) => {
+          const active = match(pathname);
           return (
             <Link
               key={label}
@@ -131,16 +131,7 @@ function GridIcon({ active }: { active?: boolean }) {
   );
 }
 
-// Shortlist star icon; strokes indigo when active
-function StarIcon({ active }: { active?: boolean }) {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill={active ? "#4F46E5" : "none"} stroke={active ? "#4F46E5" : "currentColor"} strokeWidth="1.8">
-      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-    </svg>
-  );
-}
-
-// Agents list / saved items icon; strokes indigo when active
+// Shortlist / saved items icon; strokes indigo when active
 function BookmarkIcon({ active }: { active?: boolean }) {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? "#4F46E5" : "currentColor"} strokeWidth="1.8">
