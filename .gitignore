@@ -50,3 +50,7 @@ AGENTS.md
 # local dev logs / compose
 dev.log
 docker-compose.yml
+
+# local DB export (contains sensitive data)
+db-export.xlsx
+turso-dump.xlsx

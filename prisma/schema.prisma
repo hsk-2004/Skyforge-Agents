@@ -1,7 +1,7 @@
 // Turso (libSQL) database; the app connects through the driver adapter in src/backend/db.ts.
 // DATABASE_URL is only used by the Prisma CLI (points at a local file placeholder).
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
