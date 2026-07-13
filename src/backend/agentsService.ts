@@ -20,12 +20,12 @@ export async function getAgents({ search, country, network, service, metaOnly }:
   const where: Prisma.AgentWhereInput = {};
 
   // General search across company, city, and country
-  // (SQLite's `contains` is case-insensitive by default, so no mode flag needed)
+  // (Postgres `contains` is case-sensitive, so add insensitive mode)
   if (search) {
     where.OR = [
-      { company: { contains: search } },
-      { city: { contains: search } },
-      { country: { contains: search } },
+      { company: { contains: search, mode: "insensitive" } },
+      { city: { contains: search, mode: "insensitive" } },
+      { country: { contains: search, mode: "insensitive" } },
     ];
   }
 
@@ -36,12 +36,12 @@ export async function getAgents({ search, country, network, service, metaOnly }:
 
   // Specific network filter
   if (network && network !== "All") {
-    where.networks = { contains: network };
+    where.networks = { contains: network, mode: "insensitive" };
   }
 
   // Specific service filter
   if (service && service !== "All") {
-    where.services = { contains: service };
+    where.services = { contains: service, mode: "insensitive" };
   }
 
   // Total match count (cheap) plus the capped row query, skipped in meta-only mode
