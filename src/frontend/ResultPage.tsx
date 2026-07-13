@@ -31,6 +31,9 @@ function ResultsContent() {
   // Toggle states
   const [shortlistOnly, setShortlistOnly] = useState(false);
 
+  // Country suggestion dropdown for the search box
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
   // Toast message shown briefly after shortlist actions
   const [toast, setToast] = useState("");
   const showToast = (message: string) => {
@@ -250,6 +253,12 @@ function ResultsContent() {
       return 0; // Mixed types shouldn't happen; keep original order
     });
 
+  // Up to 8 countries whose names contain the current search text (case-insensitive)
+  const countrySuggestions =
+    searchQuery.trim().length > 0
+      ? countries.filter((c) => c.toLowerCase().includes(searchQuery.trim().toLowerCase())).slice(0, 8)
+      : [];
+
   // Clicking a sortable header: same column flips direction, new column sorts ascending
   const toggleSort = (field: "company" | "rating" | "country" | "networks") => {
     if (sortBy === field) {
@@ -279,19 +288,49 @@ function ResultsContent() {
               <ArrowLeftIcon />
             </button>
 
-            {/* Main Search Input Group */}
-            <div className="flex w-full min-w-0 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm focus-within:ring-2 focus-within:ring-indigo-500 sm:w-auto sm:flex-1 md:max-w-96">
-              <div className="flex shrink-0 items-center gap-1 border-r border-gray-200 px-3 py-2 text-gray-500 bg-gray-50/50">
-                <SearchIcon />
-                <span className="hidden text-xs font-medium whitespace-nowrap sm:inline">Search</span>
+            {/* Main Search Input Group with live country suggestions */}
+            <div className="relative w-full sm:w-auto sm:flex-1 md:max-w-96">
+              <div className="flex min-w-0 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm focus-within:ring-2 focus-within:ring-indigo-500">
+                <div className="flex shrink-0 items-center gap-1 border-r border-gray-200 px-3 py-2 text-gray-500 bg-gray-50/50">
+                  <SearchIcon />
+                  <span className="hidden text-xs font-medium whitespace-nowrap sm:inline">Search</span>
+                </div>
+                <input
+                  type="text"
+                  placeholder="Enter country, city, or company name..."
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setShowSuggestions(true);
+                  }}
+                  onFocus={() => setShowSuggestions(true)}
+                  // Delay hiding so a click on a suggestion registers before blur closes it
+                  onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+                  className="w-full min-w-0 px-3 py-2 text-sm text-gray-700 outline-none placeholder:text-gray-400"
+                />
               </div>
-              <input
-                type="text"
-                placeholder="Enter country, city, or company name..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full min-w-0 px-3 py-2 text-sm text-gray-700 outline-none placeholder:text-gray-400"
-              />
+
+              {/* Country suggestions dropdown */}
+              {showSuggestions && countrySuggestions.length > 0 && (
+                <ul className="absolute z-20 mt-1 w-full overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg">
+                  {countrySuggestions.map((c) => (
+                    <li key={c}>
+                      <button
+                        type="button"
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => {
+                          setSearchQuery(c);
+                          setShowSuggestions(false);
+                        }}
+                        className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50"
+                      >
+                        <span>{getFlagEmoji(c)}</span>
+                        <span>{c}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
 
           </div>
