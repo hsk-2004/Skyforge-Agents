@@ -51,94 +51,90 @@ export function AgentLogo({ logo, company, size = 36 }: { logo?: string | null; 
 }
 
 // Map a country name to its flag emoji; falls back to a white flag if unknown
-export const getFlagEmoji = (countryName: string) => {
-  // Added flag emojis for countries imported from AON.xlsx (Albania, Austria, Bangladesh, etc.)
-  const code: { [key: string]: string } = {
-    Albania: "🇦🇱",
-    Argentina: "🇦🇷",
-    Australia: "🇦🇺",
-    Austria: "🇦🇹",
-    Bangladesh: "🇧🇩",
-    Belgium: "🇧🇪",
-    Brazil: "🇧🇷",
-    Bulgaria: "🇧🇬",
-    Cambodia: "🇰🇭",
-    Canada: "🇨🇦",
-    Chile: "🇨🇱",
-    China: "🇨🇳",
-    Colombia: "🇨🇴",
-    Croatia: "🇭🇷",
-    Cyprus: "🇨🇾",
-    "Czech Republic": "🇨🇿",
-    Djibouti: "🇩🇯",
-    "Dominican Republic": "🇩🇴",
-    Egypt: "🇪🇬",
-    "El Salvador": "🇸🇻",
-    Ethiopia: "🇪🇹",
-    Finland: "🇫🇮",
-    France: "🇫🇷",
-    Germany: "🇩🇪",
-    Ghana: "🇬🇭",
-    Greece: "🇬🇷",
-    Guatemala: "🇬🇹",
-    Haiti: "🇭🇹",
-    "Hong Kong": "🇭🇰",
-    India: "🇮🇳",
-    Indonesia: "🇮🇩",
-    Iran: "🇮🇷",
-    Iraq: "🇮🇶",
-    Israel: "🇮🇱",
-    Italy: "🇮🇹",
-    Japan: "🇯🇵",
-    Korea: "🇰🇷",
-    "South Korea": "🇰🇷",
-    "South-Korea": "🇰🇷",
-    Kosovo: "🇽🇰",
-    Lebanon: "🇱🇧",
-    Lichtenstein: "🇱🇮",
-    Macedonia: "🇲🇰",
-    Malaysia: "🇲🇾",
-    Mauritius: "🇲🇺",
-    Mexico: "🇲🇽",
-    Morocco: "🇲🇦",
-    Myanmar: "🇲🇲",
-    Nepal: "🇳🇵",
-    Netherlands: "🇳🇱",
-    "New Zealand": "🇳🇿",
-    Nigeria: "🇳🇬",
-    Pakistan: "🇵🇰",
-    Peru: "🇵🇪",
-    Philippines: "🇵🇭",
-    Poland: "🇵🇱",
-    Portugal: "🇵🇹",
-    Romania: "🇷🇴",
-    "Saudi Arabia": "🇸🇦",
-    Senegal: "🇸🇳",
-    Singapore: "🇸🇬",
-    Slovenia: "🇸🇮",
-    "South Africa": "🇿🇦",
-    Spain: "🇪🇸",
-    "Sri Lanka": "🇱🇰",
-    Sweden: "🇸🇪",
-    Switzerland: "🇨🇭",
-    Syria: "🇸🇾",
-    Taiwan: "🇹🇼",
-    Thailand: "🇹🇭",
-    Tunisia: "🇹🇳",
-    Turkey: "🇹🇷",
-    Türkiye: "🇹🇷",
-    UAE: "🇦🇪",
-    "United Arab Emirates": "🇦🇪",
-    UK: "🇬🇧",
-    "United Kingdom": "🇬🇧",
-    USA: "🇺🇸",
-    "United States of America": "🇺🇸",
-    Uganda: "🇺🇬",
-    Uruguay: "🇺🇾",
-    Vietnam: "🇻🇳",
-  };
-  return code[countryName] || "🏳️";
+// Country name -> ISO 3166-1 alpha-2 code. Kept as text (e.g. "IN") so every
+// country shows a consistent short form instead of a mix of flags / blanks.
+const COUNTRY_CODES: { [key: string]: string } = {
+  Afghanistan: "AF", Albania: "AL", Algeria: "DZ", Andorra: "AD", Angola: "AO",
+  "Antigua and Barbuda": "AG", Argentina: "AR", Armenia: "AM", Australia: "AU",
+  Austria: "AT", Azerbaijan: "AZ", Bahamas: "BS", Bahrain: "BH", Bangladesh: "BD",
+  Barbados: "BB", Belarus: "BY", Belgium: "BE", Belize: "BZ", Benin: "BJ",
+  Bhutan: "BT", Bolivia: "BO", "Bosnia and Herzegovina": "BA", Botswana: "BW",
+  Brazil: "BR", Brunei: "BN", Bulgaria: "BG", "Burkina Faso": "BF", Burundi: "BI",
+  Cambodia: "KH", Cameroon: "CM", Canada: "CA", "Cape Verde": "CV", Chad: "TD",
+  Chile: "CL", China: "CN", Colombia: "CO", "Costa Rica": "CR", "Ivory Coast": "CI",
+  "Cote d'Ivoire": "CI", Croatia: "HR", Cuba: "CU", Cyprus: "CY", "Czech Republic": "CZ",
+  Czechia: "CZ", "Democratic Republic of the Congo": "CD", Denmark: "DK", Djibouti: "DJ",
+  Dominica: "DM", "Dominican Republic": "DO", Ecuador: "EC", Egypt: "EG",
+  "El Salvador": "SV", Estonia: "EE", Eswatini: "SZ", Ethiopia: "ET", Fiji: "FJ",
+  Finland: "FI", France: "FR", Gabon: "GA", Gambia: "GM", Georgia: "GE",
+  Germany: "DE", Ghana: "GH", Greece: "GR", Grenada: "GD", Guatemala: "GT",
+  Guinea: "GN", Guyana: "GY", Haiti: "HT", Honduras: "HN", "Hong Kong": "HK",
+  Hungary: "HU", Iceland: "IS", India: "IN", Indonesia: "ID", Iran: "IR", Iraq: "IQ",
+  Ireland: "IE", Israel: "IL", Italy: "IT", Jamaica: "JM", Japan: "JP", Jordan: "JO",
+  Kazakhstan: "KZ", Kenya: "KE", Kosovo: "XK", Kuwait: "KW", Kyrgyzstan: "KG",
+  Laos: "LA", Latvia: "LV", Lebanon: "LB", Lesotho: "LS", Liberia: "LR", Libya: "LY",
+  Liechtenstein: "LI", Lichtenstein: "LI", Lithuania: "LT", Luxembourg: "LU",
+  Macau: "MO", Madagascar: "MG", "North Macedonia": "MK", Macedonia: "MK",
+  Malawi: "MW", Malaysia: "MY", Maldives: "MV", Mali: "ML", Malta: "MT",
+  Mauritania: "MR", Mauritius: "MU", Mexico: "MX", Moldova: "MD", Monaco: "MC",
+  Mongolia: "MN", Montenegro: "ME", Morocco: "MA", Mozambique: "MZ", Myanmar: "MM",
+  Namibia: "NA", Nepal: "NP", Netherlands: "NL", "New Zealand": "NZ", Nicaragua: "NI",
+  Niger: "NE", Nigeria: "NG", "North Korea": "KP", Norway: "NO", Oman: "OM",
+  Pakistan: "PK", Panama: "PA", "Papua New Guinea": "PG", Paraguay: "PY", Peru: "PE",
+  Philippines: "PH", Poland: "PL", Portugal: "PT", Qatar: "QA", "Republic of the Congo": "CG",
+  Congo: "CG", Romania: "RO", Russia: "RU", Rwanda: "RW", "Saudi Arabia": "SA",
+  Senegal: "SN", Serbia: "RS", Seychelles: "SC", "Sierra Leone": "SL", Singapore: "SG",
+  Slovakia: "SK", Slovenia: "SI", Somalia: "SO", "South Africa": "ZA", "South Korea": "KR",
+  "South-Korea": "KR", Korea: "KR", "South Sudan": "SS", Spain: "ES", "Sri Lanka": "LK",
+  Sudan: "SD", Suriname: "SR", Sweden: "SE", Switzerland: "CH", Syria: "SY", Taiwan: "TW",
+  Tajikistan: "TJ", Tanzania: "TZ", Thailand: "TH", Togo: "TG", "Trinidad and Tobago": "TT",
+  Tunisia: "TN", Turkey: "TR", "Türkiye": "TR", Turkmenistan: "TM", Uganda: "UG",
+  Ukraine: "UA", UAE: "AE", "United Arab Emirates": "AE", UK: "GB", "United Kingdom": "GB",
+  USA: "US", "United States": "US", "United States of America": "US", Uruguay: "UY",
+  Uzbekistan: "UZ", Venezuela: "VE", Vietnam: "VN", Yemen: "YE", Zambia: "ZM", Zimbabwe: "ZW",
 };
+
+// Strict lookup: the real ISO code for a country, or null if unknown
+export const getCountryCode = (countryName: string): string | null => {
+  if (!countryName) return null;
+  const code = COUNTRY_CODES[countryName];
+  if (code) return code;
+  const hit = Object.keys(COUNTRY_CODES).find((k) => k.toLowerCase() === countryName.toLowerCase());
+  return hit ? COUNTRY_CODES[hit] : null;
+};
+
+// Return the country's short code (e.g. "IN") as text; used where an image can't
+// be rendered (e.g. <option> elements). Falls back to the first two letters.
+export const getFlagEmoji = (countryName: string) => {
+  if (!countryName) return "";
+  return getCountryCode(countryName) || countryName.slice(0, 2).toUpperCase();
+};
+
+// Flag image for a country (from flagcdn.com). Falls back to the text code when unknown.
+export function CountryFlag({ country, className = "" }: { country: string; className?: string }) {
+  const code = getCountryCode(country);
+  if (!code) {
+    return (
+      <span className={`text-[10px] font-semibold text-gray-400 ${className}`}>
+        {country.slice(0, 2).toUpperCase()}
+      </span>
+    );
+  }
+  const cc = code.toLowerCase();
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={`https://flagcdn.com/24x18/${cc}.png`}
+      srcSet={`https://flagcdn.com/48x36/${cc}.png 2x`}
+      width={20}
+      height={15}
+      alt={country}
+      title={country}
+      loading="lazy"
+      className={`inline-block h-[15px] w-[20px] shrink-0 rounded-[2px] object-cover ${className}`}
+    />
+  );
+}
 
 // Return Tailwind classes for a network badge, giving each network its own color
 export const getNetworkBadgeStyles = (network: string) => {

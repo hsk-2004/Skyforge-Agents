@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { getFlagEmoji, SearchIcon, ChevronRightIcon } from "@/frontend/agentUi";
+import { CountryFlag, SearchIcon, ChevronRightIcon } from "@/frontend/agentUi";
 import { motion } from "framer-motion";
 
 export default function LandingPage() {
@@ -126,7 +126,7 @@ export default function LandingPage() {
                     onClick={() => goToResults(c)}
                     className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50"
                   >
-                    <span>{getFlagEmoji(c)}</span>
+                    <CountryFlag country={c} />
                     <span>{c}</span>
                   </button>
                 </li>
@@ -194,7 +194,7 @@ export default function LandingPage() {
                       onClick={() => goToResults("", row.country)}
                     >
                       <td className="flex items-center gap-2 px-4 py-3 text-gray-800">
-                        <span>{getFlagEmoji(row.country)}</span>
+                        <CountryFlag country={row.country} />
                         {row.country}
                       </td>
                       <td className="px-4 py-3 text-gray-800">{row.count.toLocaleString()}</td>

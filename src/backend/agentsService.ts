@@ -29,9 +29,9 @@ export async function getAgents({ search, country, network, service, metaOnly }:
     ];
   }
 
-  // Specific country filter
+  // Specific country filter (case-insensitive so "India" also matches "india")
   if (country && country !== "All") {
-    where.country = { equals: country };
+    where.country = { equals: country, mode: "insensitive" };
   }
 
   // Specific network filter
@@ -54,13 +54,21 @@ export async function getAgents({ search, country, network, service, metaOnly }:
         take: MAX_RESULTS,
       });
 
-  // Fetch unique countries for the UI dropdown
+  // Fetch unique countries for the UI dropdown, then merge case variants
+  // (e.g. "India" and "india") into one, preferring the properly-cased version.
   const countriesResult = await prisma.agent.findMany({
     select: { country: true },
     distinct: ["country"],
     orderBy: { country: "asc" },
   });
-  const countries = countriesResult.map((c) => c.country).filter(Boolean);
+  const countryMap = new Map<string, string>();
+  for (const c of countriesResult.map((r) => r.country).filter(Boolean)) {
+    const key = c.toLowerCase();
+    const existing = countryMap.get(key);
+    // Keep the variant that starts with an uppercase letter (the proper spelling)
+    if (!existing || (/^[A-Z]/.test(c) && !/^[A-Z]/.test(existing))) countryMap.set(key, c);
+  }
+  const countries = Array.from(countryMap.values()).sort();
 
   // Fetch unique networks for the UI dropdown
   const agentsWithNetworks = await prisma.agent.findMany({

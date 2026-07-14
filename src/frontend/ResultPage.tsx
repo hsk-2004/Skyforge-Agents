@@ -5,7 +5,7 @@ import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   Agent,
-  getFlagEmoji,
+  CountryFlag,
   getNetworkBadgeStyles,
   SearchIcon,
   ChevronDownIcon,
@@ -16,7 +16,9 @@ import {
   SortIcon,
   AgentLogo,
 } from "@/frontend/agentUi";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import EmailComposer from "@/frontend/EmailComposer";
+import CountrySelect from "@/frontend/CountrySelect";
 
 function ResultsContent() {
   const router = useRouter();
@@ -170,6 +172,7 @@ function ResultsContent() {
     services: "", transportMode: "", coverage: "", operation: "", segments: "", fullAddress: "",
   };
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showEmailComposer, setShowEmailComposer] = useState(false); // rich email modal
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState("");
@@ -376,7 +379,7 @@ function ResultsContent() {
                         onClick={() => applySearch(c)}
                         className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50"
                       >
-                        <span>{getFlagEmoji(c)}</span>
+                        <CountryFlag country={c} />
                         <span>{c}</span>
                       </button>
                     </li>
@@ -395,24 +398,8 @@ function ResultsContent() {
           }`}
         >
           <div className="flex flex-wrap items-center gap-2">
-            {/* Country Select Filter */}
-            <div className="relative">
-              <select
-                value={selectedCountry}
-                onChange={(e) => setSelectedCountry(e.target.value)}
-                className="appearance-none rounded-lg border border-gray-300 bg-white pl-3 pr-8 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 outline-none"
-              >
-                <option value="All">All Countries</option>
-                {countries.map((c) => (
-                  <option key={c} value={c}>
-                    {getFlagEmoji(c)} {c}
-                  </option>
-                ))}
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-gray-500">
-                <ChevronDownIcon />
-              </div>
-            </div>
+            {/* Country Select Filter (custom dropdown with flags) */}
+            <CountrySelect value={selectedCountry} countries={countries} onChange={setSelectedCountry} />
 
             {/* Services Filter Dropdown (Custom Mock options) */}
             <div className="relative">
@@ -504,14 +491,7 @@ function ResultsContent() {
               Add to Shortlist
             </button>
             <button
-              onClick={() => {
-                // Collect the selected agents' email addresses and open the mail client
-                const emails = agents
-                  .filter((a) => selectedIds.has(a.id) && a.contacts)
-                  .flatMap((a) => a.contacts!.split(",").map((t) => t.trim()))
-                  .filter((t) => t.includes("@"));
-                if (emails.length > 0) window.location.href = `mailto:${[...new Set(emails)].join(",")}`;
-              }}
+              onClick={() => setShowEmailComposer(true)}
               className="bg-white px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
             >
               Send E-mail
@@ -706,6 +686,7 @@ function ResultsContent() {
                       <td className="border-r border-gray-100 px-6 py-4">
                         <div className="flex items-center gap-1.5 rounded-md bg-white border border-gray-200 px-2.5 py-1.5 text-xs text-slate-700 w-fit">
                           <UpDownIcon />
+                          <CountryFlag country={agent.country} />
                           <span className="font-medium leading-tight">
                             {agent.country}
                             {agent.city ? (
@@ -773,6 +754,16 @@ function ResultsContent() {
           )}
         </motion.div>
       </section>
+
+      {/* Rich email composer for the selected agents (animated slide-in/out) */}
+      <AnimatePresence>
+        {showEmailComposer && (
+          <EmailComposer
+            agents={agents.filter((a) => selectedIds.has(a.id))}
+            onClose={() => setShowEmailComposer(false)}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Add Agent modal */}
       {showAddModal && (

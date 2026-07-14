@@ -4,7 +4,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Agent, getFlagEmoji, getNetworkBadgeStyles, ArrowLeftIcon, AgentLogo } from "@/frontend/agentUi";
+import { Agent, CountryFlag, getNetworkBadgeStyles, ArrowLeftIcon, AgentLogo } from "@/frontend/agentUi";
 import { motion } from "framer-motion";
 
 export default function AgentProfilePage() {
@@ -104,7 +104,7 @@ export default function AgentProfilePage() {
       label: "Office",
       value: (
         <span className="inline-flex items-center gap-1.5 rounded-md border border-gray-200 bg-white px-2 py-1 text-xs font-medium text-gray-700">
-          <span>{getFlagEmoji(agent.country)}</span>
+          <CountryFlag country={agent.country} />
           {agent.country}
           {agent.city ? `, ${agent.city}` : ""}
         </span>

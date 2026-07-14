@@ -4,20 +4,33 @@ import { sendAgentEmails, EmailRecipient } from "@/backend/emailService";
 
 export async function POST(request: Request) {
   try {
-    const { recipients, subject, message } = await request.json();
+    const { recipients, subject, body, from, cc, reason } = await request.json();
 
     // Basic validation
     if (!Array.isArray(recipients) || recipients.length === 0) {
       return NextResponse.json({ success: false, error: "No recipients provided" }, { status: 400 });
     }
-    if (!subject?.trim() || !message?.trim()) {
+    if (!subject?.trim() || !body?.trim()) {
       return NextResponse.json({ success: false, error: "Subject and message are required" }, { status: 400 });
     }
 
     // Keep only recipients that actually have an email address
-    const valid: EmailRecipient[] = recipients.filter((r: EmailRecipient) => r?.email?.includes("@"));
+    const valid: EmailRecipient[] = recipients
+      .filter((r: EmailRecipient) => r?.email?.includes("@"))
+      .map((r: EmailRecipient) => ({ email: r.email.trim(), name: (r.name || "").trim() }));
 
-    const result = await sendAgentEmails(valid, subject.trim(), message.trim());
+    if (valid.length === 0) {
+      return NextResponse.json({ success: false, error: "No valid email addresses" }, { status: 400 });
+    }
+
+    // Normalize cc into a string array
+    const ccList = Array.isArray(cc) ? cc.filter(Boolean) : cc ? [cc] : [];
+
+    const result = await sendAgentEmails(valid, subject.trim(), body.trim(), {
+      from: from?.trim(),
+      cc: ccList,
+      reason: reason?.trim(),
+    });
     return NextResponse.json({ success: true, ...result });
   } catch (error) {
     console.error("Failed to send emails:", error);
