@@ -95,3 +95,48 @@ export async function getAgents({ search, country, network, service, metaOnly }:
 export async function getAgentById(id: string) {
   return prisma.agent.findUnique({ where: { id } });
 }
+
+// Delete an agent by id (admin-only; caller must enforce the role check)
+export async function deleteAgent(id: string) {
+  return prisma.agent.delete({ where: { id } });
+}
+
+// Fields accepted when creating a new agent (company + country are required)
+export interface NewAgentInput {
+  company: string;
+  country: string;
+  city?: string;
+  fullAddress?: string;
+  contacts?: string;
+  networks?: string;
+  services?: string;
+  transportMode?: string;
+  coverage?: string;
+  operation?: string;
+  segments?: string;
+  financialStatus?: string;
+}
+
+// Insert a new agent; trims strings and stores empty optionals as null
+export async function createAgent(input: NewAgentInput) {
+  const clean = (v?: string) => {
+    const t = (v || "").trim();
+    return t.length > 0 ? t : null;
+  };
+  return prisma.agent.create({
+    data: {
+      company: input.company.trim(),
+      country: input.country.trim(),
+      city: clean(input.city),
+      fullAddress: clean(input.fullAddress),
+      contacts: clean(input.contacts),
+      networks: clean(input.networks),
+      services: clean(input.services),
+      transportMode: clean(input.transportMode),
+      coverage: clean(input.coverage),
+      operation: clean(input.operation),
+      segments: clean(input.segments),
+      financialStatus: clean(input.financialStatus),
+    },
+  });
+}

@@ -31,14 +31,18 @@ export default function Sidebar({ userName }: { userName?: string | null }) {
         <span className="hidden text-[10px] font-medium text-gray-400 md:block">Beta</span>
       </Link>
 
-      {/* User avatar showing the signed-in user's initial */}
-      <div
-        aria-label={userName ? `Signed in as ${userName}` : "User avatar"}
-        title={userName || undefined}
-        className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gray-800 text-sm font-semibold text-white ring-2 ring-indigo-500 md:mb-2 md:h-11 md:w-11"
+      {/* User avatar — links to the profile page */}
+      <Link
+        href="/profile"
+        aria-label={userName ? `Profile — signed in as ${userName}` : "Profile"}
+        title={userName || "Profile"}
+        aria-current={pathname === "/profile" ? "page" : undefined}
+        className={`flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gray-800 text-sm font-semibold text-white ring-2 md:mb-2 md:h-11 md:w-11 ${
+          pathname === "/profile" ? "ring-indigo-400 ring-offset-2" : "ring-indigo-500"
+        }`}
       >
         {initial}
-      </div>
+      </Link>
 
       {/* Navigation icon buttons, built from the navItems list above */}
       <nav aria-label="Main navigation" className="flex min-w-0 flex-1 flex-row items-center justify-around gap-1 md:flex-col md:justify-start md:gap-4">

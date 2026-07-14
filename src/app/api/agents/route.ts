@@ -1,6 +1,6 @@
-// API endpoint: GET /api/agents — thin wrapper around the backend service
+// API endpoint: GET (list) and POST (create) /api/agents — thin wrapper around the backend service
 import { NextResponse } from "next/server";
-import { getAgents } from "@/backend/agentsService";
+import { getAgents, createAgent } from "@/backend/agentsService";
 
 export async function GET(request: Request) {
   try {
@@ -22,6 +22,23 @@ export async function GET(request: Request) {
   } catch (error) {
     // Log server-side and return a 500 so the client can show an error state
     console.error("Failed to fetch agents:", error);
+    const message = error instanceof Error ? error.message : "Internal Server Error";
+    return NextResponse.json({ success: false, error: message }, { status: 500 });
+  }
+}
+
+// POST /api/agents — create a new agent from the "Add Agent" form
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    // company and country are required
+    if (!body?.company?.trim() || !body?.country?.trim()) {
+      return NextResponse.json({ success: false, error: "Company and country are required" }, { status: 400 });
+    }
+    const agent = await createAgent(body);
+    return NextResponse.json({ success: true, agent }, { status: 201 });
+  } catch (error) {
+    console.error("Failed to create agent:", error);
     const message = error instanceof Error ? error.message : "Internal Server Error";
     return NextResponse.json({ success: false, error: message }, { status: 500 });
   }

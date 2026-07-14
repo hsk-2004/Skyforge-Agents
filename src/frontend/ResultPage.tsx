@@ -162,6 +162,47 @@ function ResultsContent() {
   const [countries, setCountries] = useState<string[]>([]);
   const [networks, setNetworks] = useState<string[]>([]);
   const [loading, setLoading] = useState(true); // true from the start so the first paint shows the spinner, not "no agents"
+  const [refreshKey, setRefreshKey] = useState(0); // bump to re-fetch the list (e.g. after adding an agent)
+
+  // Add Agent modal state
+  const emptyForm = {
+    company: "", country: "", city: "", contacts: "", networks: "",
+    services: "", transportMode: "", coverage: "", operation: "", segments: "", fullAddress: "",
+  };
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [form, setForm] = useState(emptyForm);
+  const [saving, setSaving] = useState(false);
+  const [formError, setFormError] = useState("");
+
+  // Submit the new-agent form to the API, then refresh the table
+  const submitNewAgent = async () => {
+    setFormError("");
+    if (!form.company.trim() || !form.country.trim()) {
+      setFormError("Company and country are required.");
+      return;
+    }
+    setSaving(true);
+    try {
+      const res = await fetch("/api/agents", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        setFormError(data.error || "Failed to add agent.");
+        return;
+      }
+      setShowAddModal(false);
+      setForm(emptyForm);
+      setRefreshKey((k) => k + 1); // reload the list so the new agent shows
+      showToast("Agent added successfully");
+    } catch {
+      setFormError("Failed to add agent.");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   // Fetch initial filter data (countries, networks) — meta=1 skips the heavy agent rows
   useEffect(() => {
@@ -209,7 +250,7 @@ function ResultsContent() {
 
     const delayDebounce = setTimeout(fetchAgents, 300);
     return () => clearTimeout(delayDebounce);
-  }, [searchQuery, selectedCountry, selectedNetwork, selectedService]);
+  }, [searchQuery, selectedCountry, selectedNetwork, selectedService, refreshKey]);
 
   // Return to the home dashboard
   const handleBackToDashboard = () => {
@@ -424,6 +465,18 @@ function ResultsContent() {
               }`}
             >
               Shortlist Only
+            </button>
+
+            {/* Add a brand-new agent to the database */}
+            <button
+              onClick={() => {
+                setForm(emptyForm);
+                setFormError("");
+                setShowAddModal(true);
+              }}
+              className="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700"
+            >
+              + Add Agent
             </button>
           </div>
         </div>
@@ -720,6 +773,81 @@ function ResultsContent() {
           )}
         </motion.div>
       </section>
+
+      {/* Add Agent modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setShowAddModal(false)}>
+          <div
+            className="max-h-[88vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-6 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-900">Add Agent</h2>
+              <button onClick={() => setShowAddModal(false)} aria-label="Close" className="text-gray-400 hover:text-gray-600">
+                ✕
+              </button>
+            </div>
+
+            {formError && (
+              <div className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{formError}</div>
+            )}
+
+            {/* Form fields — company + country required, rest optional */}
+            <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+              {[
+                { key: "company", label: "Company *", ph: "Company name" },
+                { key: "country", label: "Country *", ph: "e.g. India" },
+                { key: "city", label: "City", ph: "e.g. Mumbai" },
+                { key: "contacts", label: "Contacts", ph: "email, phone, name (comma-separated)" },
+                { key: "networks", label: "Networks", ph: "e.g. AON, WCA (comma-separated)" },
+                { key: "services", label: "Services", ph: "e.g. Air Freight" },
+                { key: "transportMode", label: "Transport Mode", ph: "e.g. Air, Ocean" },
+                { key: "coverage", label: "Coverage", ph: "e.g. Nationwide" },
+                { key: "operation", label: "Operation", ph: "" },
+                { key: "segments", label: "Segments", ph: "" },
+              ].map(({ key, label, ph }) => (
+                <div key={key}>
+                  <label className="mb-1 block text-xs font-semibold text-gray-600">{label}</label>
+                  <input
+                    type="text"
+                    value={form[key as keyof typeof form]}
+                    placeholder={ph}
+                    onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-200"
+                  />
+                </div>
+              ))}
+              {/* Full address spans both columns */}
+              <div className="sm:col-span-2">
+                <label className="mb-1 block text-xs font-semibold text-gray-600">Full Address</label>
+                <input
+                  type="text"
+                  value={form.fullAddress}
+                  placeholder="Street, area, postal code"
+                  onChange={(e) => setForm((f) => ({ ...f, fullAddress: e.target.value }))}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-200"
+                />
+              </div>
+            </div>
+
+            <div className="mt-6 flex justify-end gap-2">
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={submitNewAgent}
+                disabled={saving}
+                className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-60"
+              >
+                {saving ? "Saving..." : "Add Agent"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Success toast for shortlist actions */}
       {toast && (

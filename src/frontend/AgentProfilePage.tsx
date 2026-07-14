@@ -14,6 +14,38 @@ export default function AgentProfilePage() {
   const [agent, setAgent] = useState<Agent | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [isAdmin, setIsAdmin] = useState(false); // controls the delete button
+  const [deleting, setDeleting] = useState(false);
+
+  // Check whether the signed-in user is an admin (delete is admin-only)
+  useEffect(() => {
+    fetch("/api/me")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.success && d.user?.role === "admin") setIsAdmin(true);
+      })
+      .catch(() => {});
+  }, []);
+
+  // Delete this agent (admin only), then return to the results list
+  const handleDelete = async () => {
+    if (!agent) return;
+    if (!confirm(`Delete "${agent.company}"? This cannot be undone.`)) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/agents/${agent.id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        router.push("/results");
+      } else {
+        alert(data.error || "Failed to delete agent");
+        setDeleting(false);
+      }
+    } catch {
+      alert("Failed to delete agent");
+      setDeleting(false);
+    }
+  };
 
   // Load the agent by the id in the URL
   useEffect(() => {
@@ -87,15 +119,28 @@ export default function AgentProfilePage() {
 
   return (
     <main className="mx-auto max-w-[1600px] px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
-      {/* Back to results */}
-      <button
-        onClick={() => router.back()}
-        className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 hover:bg-gray-50 hover:text-gray-700"
-        title="Back"
-        aria-label="Back"
-      >
-        <ArrowLeftIcon />
-      </button>
+      {/* Top bar: back button, and delete (admins only) */}
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <button
+          onClick={() => router.back()}
+          className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+          title="Back"
+          aria-label="Back"
+        >
+          <ArrowLeftIcon />
+        </button>
+
+        {/* Delete is only shown to admin users; the API also enforces this */}
+        {isAdmin && (
+          <button
+            onClick={handleDelete}
+            disabled={deleting}
+            className="rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-100 disabled:opacity-60"
+          >
+            {deleting ? "Deleting..." : "Delete Agent"}
+          </button>
+        )}
+      </div>
 
       <motion.div
         initial={{ opacity: 0, y: 12 }}
