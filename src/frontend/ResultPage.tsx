@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import {
   Agent,
   CountryFlag,
+  TagChips,
   getNetworkBadgeStyles,
   SearchIcon,
   ChevronDownIcon,
@@ -684,26 +685,27 @@ function ResultsContent() {
 
                       {/* Office */}
                       <td className="border-r border-gray-100 px-6 py-4">
+                        {/* Office cell shows only the country; full address is on the profile */}
                         <div className="flex items-center gap-1.5 rounded-md bg-white border border-gray-200 px-2.5 py-1.5 text-xs text-slate-700 w-fit">
                           <UpDownIcon />
                           <CountryFlag country={agent.country} />
-                          <span className="font-medium leading-tight">
-                            {agent.country}
-                            {agent.city ? (
-                              <>
-                                <br />
-                                {agent.city}
-                              </>
-                            ) : null}
-                          </span>
+                          <span className="font-medium leading-tight">{agent.country}</span>
                         </div>
                       </td>
 
-                      {/* Empty placeholder columns matching screenshot */}
-                      <td className="border-r border-gray-100 px-4 py-4 text-gray-400 text-xs">—</td>
-                      <td className="border-r border-gray-100 px-4 py-4 text-gray-400 text-xs">—</td>
-                      <td className="border-r border-gray-100 px-4 py-4 text-gray-400 text-xs">—</td>
-                      <td className="border-r border-gray-100 px-4 py-4 text-gray-400 text-xs">—</td>
+                      {/* Coverage / Operation / Transport Mode / Services — real values from the DB */}
+                      <td className="border-r border-gray-100 px-4 py-4 text-xs text-slate-700">
+                        {agent.coverage || <span className="text-gray-300">—</span>}
+                      </td>
+                      <td className="border-r border-gray-100 px-4 py-4 text-xs text-slate-700">
+                        {agent.operation || <span className="text-gray-300">—</span>}
+                      </td>
+                      <td className="border-r border-gray-100 px-4 py-4">
+                        <TagChips value={agent.transportMode} />
+                      </td>
+                      <td className="border-r border-gray-100 px-4 py-4">
+                        <TagChips value={agent.services} />
+                      </td>
 
                       {/* Contacts */}
                       <td className="border-r border-gray-100 px-6 py-4">
@@ -722,7 +724,9 @@ function ResultsContent() {
                       </td>
 
                       {/* Segments */}
-                      <td className="border-r border-gray-100 px-4 py-4 text-gray-400 text-xs">—</td>
+                      <td className="border-r border-gray-100 px-4 py-4 text-xs text-slate-700">
+                        {agent.segments || <span className="text-gray-300">—</span>}
+                      </td>
 
                       {/* Networks */}
                       <td className="px-6 py-4">

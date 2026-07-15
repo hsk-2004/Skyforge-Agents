@@ -136,6 +136,24 @@ export function CountryFlag({ country, className = "" }: { country: string; clas
   );
 }
 
+// Render a space/comma-separated field (e.g. "Air Road Sea") as stacked chips
+export function TagChips({ value }: { value?: string | null }) {
+  const tokens = (value || "").split(/[\s,]+/).map((t) => t.trim()).filter(Boolean);
+  if (tokens.length === 0) return <span className="text-xs text-gray-300">—</span>;
+  return (
+    <div className="flex w-fit flex-col gap-1">
+      {tokens.map((t, i) => (
+        <span
+          key={i}
+          className="inline-flex w-fit items-center rounded-md border border-gray-200 bg-white px-2 py-0.5 text-xs text-slate-700"
+        >
+          {t}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 // Return Tailwind classes for a network badge, giving each network its own color
 export const getNetworkBadgeStyles = (network: string) => {
   const styles: { [key: string]: string } = {

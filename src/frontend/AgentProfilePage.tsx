@@ -103,11 +103,15 @@ export default function AgentProfilePage() {
     {
       label: "Office",
       value: (
-        <span className="inline-flex items-center gap-1.5 rounded-md border border-gray-200 bg-white px-2 py-1 text-xs font-medium text-gray-700">
-          <CountryFlag country={agent.country} />
-          {agent.country}
-          {agent.city ? `, ${agent.city}` : ""}
-        </span>
+        <div className="flex flex-col gap-1.5">
+          <span className="inline-flex w-fit items-center gap-1.5 rounded-md border border-gray-200 bg-white px-2 py-1 text-xs font-medium text-gray-700">
+            <CountryFlag country={agent.country} />
+            {agent.country}
+            {agent.city ? `, ${agent.city}` : ""}
+          </span>
+          {/* Full office address (only on the profile, not the list) */}
+          {agent.fullAddress && <span className="text-xs text-gray-500">{agent.fullAddress}</span>}
+        </div>
       ),
     },
     { label: "Transport Mode", value: agent.transportMode },
